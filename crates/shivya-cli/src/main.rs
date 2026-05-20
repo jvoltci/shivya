@@ -9,8 +9,15 @@ use tokio::net::UnixListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use telemetry::TelemetrySampler;
 use orchestrator::NativeOrchestrator;
+use std::net::SocketAddr;
 
-const SOCKET_PATH: &str = "/tmp/shivya_cli.sock";
+use futures_util::StreamExt;
+use futures_util::SinkExt;
+use tokio_tungstenite::tungstenite::Message;
+
+fn get_socket_path(port: u16) -> String {
+    format!("/tmp/shivya_cli_{}.sock", port)
+}
 
 #[derive(Parser)]
 #[command(name = "shivya-cli")]
@@ -27,9 +34,25 @@ enum Commands {
         /// Spawn the orchestrator in the background
         #[arg(long)]
         daemon: bool,
+
+        /// Port to bind the UDP listener on
+        #[arg(long, default_value_t = 8085)]
+        port: u16,
+
+        /// Bootstrap peer socket address (e.g. 127.0.0.1:8085)
+        #[arg(long)]
+        peer: Option<SocketAddr>,
+
+        /// Enable real-time WebSocket visualization server
+        #[arg(long)]
+        visualize: bool,
     },
     /// Query active memory segments and print metrics
-    Status,
+    Status {
+        /// Port of the target daemon to query
+        #[arg(long, default_value_t = 8085)]
+        port: u16,
+    },
 }
 
 #[cfg(unix)]
@@ -58,23 +81,111 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
 
     match args.command {
-        Commands::Start { daemon } => {
+        Commands::Start { daemon, port, peer, visualize } => {
             println!("Initializing Shivya 5-Layer Edge Daemon...");
 
             if daemon {
                 println!("[Daemon] Spawning unified orchestration engine in dedicated background thread pool.");
             }
 
+            let socket_path = get_socket_path(port);
+
             // Stale socket cleanup step on initialization
-            if Path::new(SOCKET_PATH).exists() {
+            if Path::new(&socket_path).exists() {
                 println!("[UDS] Lingering stale socket file found. Performing clean-up.");
-                let _ = std::fs::remove_file(SOCKET_PATH);
+                let _ = std::fs::remove_file(&socket_path);
             }
 
-            let orchestrator = Arc::new(Mutex::new(NativeOrchestrator::new(10)));
+            // Phase 11: P2P Initialization
+            let self_id = shivya_p2p::routing::NodeId::random();
+            let bind_addr: SocketAddr = format!("127.0.0.1:{}", port).parse()?;
+            println!("[P2P] Starting UDP Transport on {} with Node ID {:?}", bind_addr, self_id);
+            let transport = Arc::new(shivya_p2p::transport::UdpTransport::new(self_id, bind_addr).await?);
+            let p2p_table = Arc::clone(&transport.table);
+            let p2p_transport = Arc::clone(&transport);
+
+            let mut orchestrator_inner = NativeOrchestrator::new(10);
+            orchestrator_inner.set_p2p(self_id, p2p_table, p2p_transport);
+
+            let orchestrator = Arc::new(Mutex::new(orchestrator_inner));
             let orchestrator_clone = Arc::clone(&orchestrator);
 
+            // UDP packet receiver loop
+            let (tx_forwarder, mut rx_forwarder) = tokio::sync::mpsc::unbounded_channel();
+            let transport_clone = Arc::clone(&transport);
+            transport_clone.start(tx_forwarder);
+
+            // Connect incoming frame channel receiver to orchestrator
+            let orchestrator_p2p = Arc::clone(&orchestrator);
+            tokio::spawn(async move {
+                while let Some(frame) = rx_forwarder.recv().await {
+                    let mut orch = orchestrator_p2p.lock().await;
+                    orch.handle_p2p_frame(frame);
+                }
+            });
+
+            // Initial bootstrap Ping
+            if let Some(peer_addr) = peer {
+                println!("[P2P] Sending bootstrap handshake ping to peer at {}", peer_addr);
+                let ping_frame = shivya_p2p::protocol::Frame {
+                    sender: self_id,
+                    payload: shivya_p2p::protocol::FramePayload::Ping {
+                        timestamp: std::time::SystemTime::now()
+                            .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_millis() as u64,
+                    },
+                };
+                let _ = transport.send_to(&ping_frame, peer_addr).await;
+            }
+
+            // Phase 12: WebSocket Broadcast Setup
+            let ws_broadcast = if visualize {
+                let (tx, _) = tokio::sync::broadcast::channel::<String>(100);
+                let tx_clone = tx.clone();
+                
+                tokio::spawn(async move {
+                    let addr = "127.0.0.1:9002";
+                    if let Ok(listener) = tokio::net::TcpListener::bind(addr).await {
+                        println!("[Visualizer] WebSocket server listening on ws://{}", addr);
+                        while let Ok((stream, peer_addr)) = listener.accept().await {
+                            let tx_rx = tx_clone.clone();
+                            tokio::spawn(async move {
+                                if let Ok(ws_stream) = tokio_tungstenite::accept_async(stream).await {
+                                    println!("[Visualizer] Client connected from {}", peer_addr);
+                                    let (mut ws_writer, _) = ws_stream.split();
+                                    let mut rx = tx_rx.subscribe();
+                                    
+                                    loop {
+                                        match rx.recv().await {
+                                            Ok(msg) => {
+                                                if ws_writer.send(Message::Text(msg)).await.is_err() {
+                                                    break;
+                                                }
+                                            }
+                                            Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+                                                eprintln!("[Visualizer] Client lagging behind! Skipped {} messages.", skipped);
+                                            }
+                                            Err(_) => {
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    println!("[Visualizer] Client disconnected: {}", peer_addr);
+                                }
+                            });
+                        }
+                    } else {
+                        eprintln!("[Visualizer] Failed to bind WebSocket server to {}", addr);
+                    }
+                });
+                Some(tx)
+            } else {
+                None
+            };
+
             // Telemetry and scheduling task loop (runs every 1000ms)
+            let ws_broadcast_clone = ws_broadcast.clone();
             tokio::spawn(async move {
                 let mut sampler = TelemetrySampler::new();
                 let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(1000));
@@ -84,11 +195,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let net_rate = (rx + tx) as f64;
                     let mut orch = orchestrator_clone.lock().await;
                     orch.step(cpu as f64, net_rate);
+                    
+                    if let Some(ref tx_chan) = ws_broadcast_clone {
+                        let status_json = orch.get_status_json();
+                        let _ = tx_chan.send(status_json);
+                    }
                 }
             });
 
             // UDS Listener Task for Status Query requests
-            let listener = UnixListener::bind(SOCKET_PATH)?;
+            let listener = UnixListener::bind(&socket_path)?;
             let orchestrator_uds = Arc::clone(&orchestrator);
             tokio::spawn(async move {
                 while let Ok((mut stream, _)) = listener.accept().await {
@@ -100,24 +216,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             });
 
-            println!("[Lifecycle] Node running. UDS listener bound to {}", SOCKET_PATH);
+            println!("[Lifecycle] Node running. UDS listener bound to {}", socket_path);
             
             // Wait for termination signal
             wait_for_signals().await;
 
             // Apoptotic cleanups before exit
-            if Path::new(SOCKET_PATH).exists() {
-                let _ = std::fs::remove_file(SOCKET_PATH);
+            if Path::new(&socket_path).exists() {
+                let _ = std::fs::remove_file(&socket_path);
             }
             println!("[Lifecycle] Apoptotic clean-up complete. Node gracefully terminated.");
         }
-        Commands::Status => {
-            if !Path::new(SOCKET_PATH).exists() {
-                eprintln!("Error: Shivya daemon socket not found at {}. Is the daemon running?", SOCKET_PATH);
+        Commands::Status { port } => {
+            let socket_path = get_socket_path(port);
+            if !Path::new(&socket_path).exists() {
+                eprintln!("Error: Shivya daemon socket not found at {}. Is the daemon running?", socket_path);
                 std::process::exit(1);
             }
 
-            let mut stream = tokio::net::UnixStream::connect(SOCKET_PATH).await?;
+            let mut stream = tokio::net::UnixStream::connect(&socket_path).await?;
             let mut response = Vec::new();
             stream.read_to_end(&mut response).await?;
 

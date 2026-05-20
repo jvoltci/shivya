@@ -337,71 +337,408 @@
             logElem.scrollTop = logElem.scrollHeight;
         }
 
-        async function run() {
+        // SVG element references and layout config
+        const svg = document.getElementById("topology-svg");
+        
+        // Retained element tracking map
+        const activeElements = {
+            nodes: {},      // nodeId -> { group, circle, text }
+            edges: {},      // "u-v" -> line
+            polygons: {}    // "u-v-w" -> polygon
+        };
+
+        // Helper to clear initial placeholders on startup
+        function clearPlaceholderSVG() {
+            svg.innerHTML = "";
+        }
+
+        // Retained DOM Strategy: update in place, only add/remove on mitosis/apoptosis
+        function updateSVG(activePool, edges) {
+            const center = { x: 200, y: 150 };
+            const radius = 95;
+            const N = activePool.length;
+            const nodeCoords = {};
+
+            // Calculate active coordinates circular layout
+            activePool.forEach((nodeId, idx) => {
+                const angle = (idx * 2 * Math.PI) / N - Math.PI / 2;
+                nodeCoords[nodeId] = {
+                    x: center.x + radius * Math.cos(angle),
+                    y: center.y + radius * Math.sin(angle)
+                };
+            });
+
+            // 1. Remove node DOM elements for nodes that are no longer active (Apoptosis)
+            Object.keys(activeElements.nodes).forEach(nodeIdStr => {
+                const nodeId = parseInt(nodeIdStr, 10);
+                if (!activePool.includes(nodeId)) {
+                    const el = activeElements.nodes[nodeIdStr];
+                    svg.removeChild(el.group);
+                    delete activeElements.nodes[nodeIdStr];
+                }
+            });
+
+            // 2. Add node DOM elements for new active nodes (Mitosis)
+            activePool.forEach(nodeId => {
+                const nodeIdStr = String(nodeId);
+                if (!activeElements.nodes[nodeIdStr]) {
+                    // Create group
+                    const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    group.style.transition = "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
+                    
+                    // Create circle
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("r", "18");
+                    circle.setAttribute("fill", "white");
+                    circle.setAttribute("stroke", "var(--accent-indigo)");
+                    circle.setAttribute("stroke-width", "3");
+                    circle.style.transition = "stroke 0.3s ease, stroke-width 0.3s ease";
+                    
+                    // Create text
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("text-anchor", "middle");
+                    text.setAttribute("font-family", "'Outfit', sans-serif");
+                    text.setAttribute("font-weight", "bold");
+                    text.setAttribute("font-size", "11");
+                    text.setAttribute("fill", "#0F172A");
+                    text.textContent = `Node${nodeId}`;
+                    
+                    group.appendChild(circle);
+                    group.appendChild(text);
+                    svg.appendChild(group);
+                    
+                    activeElements.nodes[nodeIdStr] = { group, circle, text };
+                }
+            });
+
+            // 3. Remove edge DOM elements that are no longer present
+            const activeEdgeKeys = new Set(edges.map(e => {
+                const sorted = [...e].sort((a, b) => a - b);
+                return `${sorted[0]}-${sorted[1]}`;
+            }));
+
+            Object.keys(activeElements.edges).forEach(key => {
+                if (!activeEdgeKeys.has(key)) {
+                    svg.removeChild(activeElements.edges[key]);
+                    delete activeElements.edges[key];
+                }
+            });
+
+            // 4. Add edge DOM elements that are new
+            edges.forEach(edge => {
+                const sorted = [...edge].sort((a, b) => a - b);
+                const key = `${sorted[0]}-${sorted[1]}`;
+                if (!activeElements.edges[key]) {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("stroke", "#94A3B8");
+                    line.setAttribute("stroke-width", "2");
+                    line.style.transition = "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)";
+                    // Insert edges before groups (so nodes sit on top of edges)
+                    const firstGroup = svg.querySelector("g");
+                    if (firstGroup) {
+                        svg.insertBefore(line, firstGroup);
+                    } else {
+                        svg.appendChild(line);
+                    }
+                    activeElements.edges[key] = line;
+                }
+            });
+
+            // 5. Update positions of nodes (Retained element strategy)
+            activePool.forEach(nodeId => {
+                const nodeIdStr = String(nodeId);
+                const coords = nodeCoords[nodeId];
+                const el = activeElements.nodes[nodeIdStr];
+                if (el && coords) {
+                    el.circle.setAttribute("cx", coords.x);
+                    el.circle.setAttribute("cy", coords.y);
+                    el.text.setAttribute("x", coords.x);
+                    el.text.setAttribute("y", coords.y + 4);
+                }
+            });
+
+            // 6. Update positions of edges
+            edges.forEach(edge => {
+                const sorted = [...edge].sort((a, b) => a - b);
+                const key = `${sorted[0]}-${sorted[1]}`;
+                const line = activeElements.edges[key];
+                const coords1 = nodeCoords[sorted[0]];
+                const coords2 = nodeCoords[sorted[1]];
+                if (line && coords1 && coords2) {
+                    line.setAttribute("x1", coords1.x);
+                    line.setAttribute("y1", coords1.y);
+                    line.setAttribute("x2", coords2.x);
+                    line.setAttribute("y2", coords2.y);
+                }
+            });
+
+            // 7. Find Mutual Triangles (2-simplices) for HodgeMesh
+            const activeTriangleKeys = new Set();
+            for (let i = 0; i < activePool.length; i++) {
+                for (let j = i + 1; j < activePool.length; j++) {
+                    for (let k = j + 1; k < activePool.length; k++) {
+                        const u = activePool[i];
+                        const v = activePool[j];
+                        const w = activePool[k];
+                        // check if edges u-v, v-w, u-w all exist
+                        const hasUV = activeEdgeKeys.has(`${Math.min(u,v)}-${Math.max(u,v)}`);
+                        const hasVW = activeEdgeKeys.has(`${Math.min(v,w)}-${Math.max(v,w)}`);
+                        const hasUW = activeEdgeKeys.has(`${Math.min(u,w)}-${Math.max(u,w)}`);
+                        if (hasUV && hasVW && hasUW) {
+                            const sortedTri = [u, v, w].sort((a, b) => a - b);
+                            activeTriangleKeys.add(`${sortedTri[0]}-${sortedTri[1]}-${sortedTri[2]}`);
+                        }
+                    }
+                }
+            }
+
+            // Remove stale triangles
+            Object.keys(activeElements.polygons).forEach(key => {
+                if (!activeTriangleKeys.has(key)) {
+                    svg.removeChild(activeElements.polygons[key]);
+                    delete activeElements.polygons[key];
+                }
+            });
+
+            // Add or update triangles (polygon 2-simplices)
+            activeTriangleKeys.forEach(key => {
+                const indices = key.split("-").map(Number);
+                const coords0 = nodeCoords[indices[0]];
+                const coords1 = nodeCoords[indices[1]];
+                const coords2 = nodeCoords[indices[2]];
+                
+                if (coords0 && coords1 && coords2) {
+                    let poly = activeElements.polygons[key];
+                    if (!poly) {
+                        poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                        poly.setAttribute("fill", "rgba(99, 102, 241, 0.08)");
+                        poly.setAttribute("stroke", "rgba(99, 102, 241, 0.2)");
+                        poly.setAttribute("stroke-dasharray", "4");
+                        // Insert polygons before edges and nodes (background layer)
+                        const firstLine = svg.querySelector("line");
+                        if (firstLine) {
+                            svg.insertBefore(poly, firstLine);
+                        } else {
+                            const firstGroup = svg.querySelector("g");
+                            if (firstGroup) {
+                                svg.insertBefore(poly, firstGroup);
+                            } else {
+                                svg.appendChild(poly);
+                            }
+                        }
+                        activeElements.polygons[key] = poly;
+                    }
+                    poly.setAttribute("points", `${coords0.x},${coords0.y} ${coords1.x},${coords1.y} ${coords2.x},${coords2.y}`);
+                }
+            });
+        }
+
+        let ws = null;
+        let orchestrator = null;
+        let isWSConnected = false;
+        let lastNodeEquations = {};
+
+        function renderState(data) {
+            // Update main panel stats
+            document.getElementById("stat-collective-f").innerText = data.collective_free_energy.toFixed(4);
+            document.getElementById("stat-curl-dev").innerText = data.curl_deviation.toFixed(4);
+            document.getElementById("stat-step-count").innerText = data.step_count || 0;
+            
+            // Extract or build active pool and edges
+            let activePool = data.active_pool || data.nodes.map(n => n.id);
+            let edges = data.edges || [];
+            if (edges.length === 0 && activePool.length === 3) {
+                edges = [[0, 1], [1, 2], [0, 2]];
+            }
+            
+            // Update SVG layout with Retained-Element strategy
+            updateSVG(activePool, edges);
+
+            // Update node list elements
+            const nodesContainer = document.getElementById("nodes-container");
+            nodesContainer.innerHTML = "";
+            
+            data.nodes.forEach(node => {
+                // Skip inactive nodes in WebSocket mode
+                if (node.active === false) return;
+
+                const card = document.createElement("div");
+                card.className = "node-card";
+                
+                // Detect hotswap
+                const isSwapped = lastNodeEquations[node.id] && lastNodeEquations[node.id] !== node.morphic_equation;
+                lastNodeEquations[node.id] = node.morphic_equation;
+                
+                const badgeClass = isSwapped || node.hotswapped ? "badge-hotswap" : "badge-active";
+                const badgeText = isSwapped || node.hotswapped ? "Hotswapped 🦀" : "Stable";
+                
+                // Update circle color in SVG based on hotswap status
+                const nodeEl = activeElements.nodes[String(node.id)];
+                if (nodeEl) {
+                    if (isSwapped || node.hotswapped) {
+                        nodeEl.circle.setAttribute("stroke", "var(--accent-rose)");
+                        nodeEl.circle.setAttribute("stroke-width", "4");
+                    } else {
+                        nodeEl.circle.setAttribute("stroke", "var(--accent-indigo)");
+                        nodeEl.circle.setAttribute("stroke-width", "3");
+                    }
+                }
+
+                // Display beliefs coordinates beautifully
+                const beliefsStr = node.beliefs.map(val => val.toFixed(4)).join(", ");
+
+                card.innerHTML = `
+                    <div class="node-card-header">
+                        <span>Node ${node.id}</span>
+                        <span class="node-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="node-meta">Free Energy (F): ${node.free_energy.toFixed(4)} | Dim: ${node.belief_dim}D</div>
+                    <div class="node-meta">Belief Coordinates (mu_q): [${beliefsStr}]</div>
+                    ${node.morphogen_u !== undefined ? `<div class="node-meta">Morphogens (U / V): ${node.morphogen_u.toFixed(4)} / ${node.morphogen_v.toFixed(4)}</div>` : ''}
+                    <div class="node-code">${node.morphic_equation}</div>
+                `;
+                nodesContainer.appendChild(card);
+            });
+        }
+
+        async function tryWebSocket() {
+            return new Promise((resolve) => {
+                log("Attempting handshake with native WebSocket daemon on port 9002...");
+                const socket = new WebSocket("ws://127.0.0.1:9002");
+                
+                socket.onopen = () => {
+                    isWSConnected = true;
+                    ws = socket;
+                    log("Handshake successful! Live WebSocket connected.");
+                    
+                    // Update header badge
+                    const wsStatus = document.getElementById("ws-status");
+                    wsStatus.innerText = "● LIVE WEBSOCKET";
+                    wsStatus.style.color = "var(--accent-teal)";
+                    wsStatus.style.fontWeight = "600";
+                    wsStatus.style.textShadow = "0 0 8px rgba(20, 184, 166, 0.4)";
+                    
+                    // Update button status
+                    const btn = document.getElementById("btn-orchestrate");
+                    btn.innerText = "Native Daemon Active (Streaming)";
+                    btn.disabled = true;
+                    btn.style.backgroundColor = "#F1F5F9";
+                    btn.style.color = "#94A3B8";
+                    btn.style.border = "1px solid var(--border-color)";
+                    btn.style.cursor = "default";
+                    
+                    clearPlaceholderSVG();
+                    resolve(true);
+                };
+                
+                socket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        renderState(data);
+                    } catch (e) {
+                        log(`Error parsing WebSocket frame: ${e}`);
+                    }
+                };
+                
+                socket.onclose = () => {
+                    if (isWSConnected) {
+                        log("WebSocket connection closed. Switching back to local WASM fallback...");
+                        switchToWASM();
+                    } else {
+                        resolve(false);
+                    }
+                };
+                
+                socket.onerror = () => {
+                    resolve(false);
+                };
+            });
+        }
+
+        async function switchToWASM() {
+            isWSConnected = false;
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            
+            // Update header badge
+            const wsStatus = document.getElementById("ws-status");
+            wsStatus.innerText = "● OFFLINE WASM MODE";
+            wsStatus.style.color = "var(--accent-indigo)";
+            wsStatus.style.fontWeight = "600";
+            wsStatus.style.textShadow = "0 0 8px rgba(99, 102, 241, 0.4)";
+            
+            // Restore button
+            const btn = document.getElementById("btn-orchestrate");
+            btn.innerText = "Execute Unified Simulation Step";
+            btn.disabled = false;
+            btn.style.backgroundColor = "var(--accent-indigo)";
+            btn.style.color = "white";
+            btn.style.cursor = "pointer";
+            btn.style.border = "none";
+            
+            if (!orchestrator) {
+                try {
+                    await init();
+                    orchestrator = new SubstrateOrchestrator();
+                    log("WASM Substrate Orchestrator initialized successfully.");
+                } catch (err) {
+                    log(`Failed to initialize WASM fallback: ${err}`);
+                }
+            }
+            
+            // Initial render of static WASM elements
+            clearPlaceholderSVG();
+            // Trigger an initial render of 3 active nodes
+            const initialWASMData = {
+                collective_free_energy: 0.0,
+                curl_deviation: 0.0,
+                step_count: 0,
+                nodes: [
+                    { id: 0, free_energy: 0.0, belief_dim: 2, beliefs: [0.1, 0.0], morphic_equation: "Expr::Mul(Const(1.0), Var(0))", hotswapped: false },
+                    { id: 1, free_energy: 0.0, belief_dim: 2, beliefs: [0.2, 0.0], morphic_equation: "Expr::Mul(Const(1.0), Var(0))", hotswapped: false },
+                    { id: 2, free_energy: 0.0, belief_dim: 2, beliefs: [0.15, 0.0], morphic_equation: "Expr::Mul(Const(1.0), Var(0))", hotswapped: false }
+                ]
+            };
+            renderState(initialWASMData);
+        }
+
+        let localStepCounter = 0;
+        document.getElementById("btn-orchestrate").addEventListener("click", () => {
+            if (isWSConnected) return; // Ignore clicks if streaming from daemon
+
+            localStepCounter++;
+            
+            // Parse inputs from UI
+            const n0 = document.getElementById("node-0-obs").value.split(",").map(parseFloat);
+            const n1 = document.getElementById("node-1-obs").value.split(",").map(parseFloat);
+            const n2 = document.getElementById("node-2-obs").value.split(",").map(parseFloat);
+            
+            const inputs = [...n0, ...n1, ...n2];
+            log(`Loaded Observations: N0=[${n0.join(",")}] N1=[${n1.join(",")}] N2=[${n2.join(",")}]`);
+            
+            // Execute unified 4-layer step loop in WebAssembly
             try {
-                // Initialize WASM
-                await init();
-                log("WASM Substrate Orchestrator loaded successfully.");
-
-                // Instantiate Orchestrator
-                const orchestrator = new SubstrateOrchestrator();
-                log("Unified Substrate Orchestrator instantiated with 3 active nodes.");
-
-                let stepCounter = 0;
-
-                // Handle step execution click
-                document.getElementById("btn-orchestrate").addEventListener("click", () => {
-                    stepCounter++;
-                    
-                    // Parse inputs from UI
-                    const n0 = document.getElementById("node-0-obs").value.split(",").map(parseFloat);
-                    const n1 = document.getElementById("node-1-obs").value.split(",").map(parseFloat);
-                    const n2 = document.getElementById("node-2-obs").value.split(",").map(parseFloat);
-                    
-                    const inputs = [...n0, ...n1, ...n2];
-                    log(`Loaded Observations: N0=[${n0.join(",")}] N1=[${n1.join(",")}] N2=[${n2.join(",")}]`);
-                    
-                    // Execute unified 4-layer step loop in WebAssembly
-                    const jsonPayload = orchestrator.step(inputs);
-                    const data = JSON.parse(jsonPayload);
-                    
-                    // Update main panel stats
-                    document.getElementById("stat-collective-f").innerText = data.collective_free_energy.toFixed(4);
-                    document.getElementById("stat-curl-dev").innerText = data.curl_deviation.toFixed(4);
-                    document.getElementById("stat-step-count").innerText = stepCounter;
-                    
-                    // Update node list elements
-                    const nodesContainer = document.getElementById("nodes-container");
-                    nodesContainer.innerHTML = "";
-                    
-                    data.nodes.forEach(node => {
-                        const card = document.createElement("div");
-                        card.className = "node-card";
-                        
-                        const badgeClass = node.hotswapped ? "badge-hotswap" : "badge-active";
-                        const badgeText = node.hotswapped ? "Hotswapped 🦀" : "Stable";
-                        
-                        card.innerHTML = `
-                            <div class="node-card-header">
-                                <span>Node ${node.id}</span>
-                                <span class="node-badge ${badgeClass}">${badgeText}</span>
-                            </div>
-                            <div class="node-meta">Free Energy (F): ${node.free_energy.toFixed(4)} | Dim: ${node.belief_dim}D</div>
-                            <div class="node-meta">Belief Coordinates (mu_q): [${node.beliefs.join(", ")}]</div>
-                            <div class="node-code">${node.morphic_equation}</div>
-                        `;
-                        nodesContainer.appendChild(card);
-                    });
-
-                    log(`Step ${stepCounter} Completed. Collective F: ${data.collective_free_energy.toFixed(4)} | Curl Deviation: ${data.curl_deviation.toFixed(4)}`);
-                });
-
+                const jsonPayload = orchestrator.step(inputs);
+                const data = JSON.parse(jsonPayload);
+                data.step_count = localStepCounter; // Add step count locally
+                renderState(data);
+                log(`Step ${localStepCounter} Completed. Collective F: ${data.collective_free_energy.toFixed(4)} | Curl Deviation: ${data.curl_deviation.toFixed(4)}`);
             } catch (err) {
-                log(`Error running substrate orchestrator: ${err}`);
+                log(`Error executing local step: ${err}`);
+            }
+        });
+
+        async function start() {
+            const hasWS = await tryWebSocket();
+            if (!hasWS) {
+                log("Handshake failed. Falling back to browser WASM mode.");
+                await switchToWASM();
             }
         }
 
-        run();
+        start();
     </script>
 </body>
 </html>

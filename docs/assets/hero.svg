@@ -28,6 +28,16 @@
       <stop offset="0%" stop-color="#EC4899" stop-opacity="0.8" />
       <stop offset="100%" stop-color="#EC4899" stop-opacity="0" />
     </radialGradient>
+    
+    <!-- Phase 11 & Phase 12 glows -->
+    <radialGradient id="p2p-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#14B8A6" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#14B8A6" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="ws-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F43F5E" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#F43F5E" stop-opacity="0" />
+    </radialGradient>
 
     <!-- Line Gradients -->
     <linearGradient id="flow-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -83,12 +93,23 @@
   <!-- Turing to Hodge -->
   <line x1="367" y1="182" x2="500" y2="85" stroke="url(#flow-grad-5)" stroke-width="2.5" stroke-linecap="round" />
 
+  <!-- Phase 11: P2P Network Integration Lines -->
+  <line x1="200" y1="100" x2="500" y2="85" stroke="rgba(20, 184, 166, 0.4)" stroke-width="1.5" stroke-dasharray="4 4" />
+  <line x1="200" y1="100" x2="418" y2="338" stroke="rgba(20, 184, 166, 0.4)" stroke-width="1.5" stroke-dasharray="4 4" />
+
+  <!-- Phase 12: WebOS WebSocket Visualizer Integration Lines -->
+  <line x1="800" y1="100" x2="500" y2="85" stroke="rgba(244, 63, 94, 0.4)" stroke-width="1.5" stroke-dasharray="4 4" />
+  <line x1="800" y1="100" x2="633" y2="182" stroke="rgba(244, 63, 94, 0.4)" stroke-width="1.5" stroke-dasharray="4 4" />
+
   <!-- Glowing Aura Backdrops -->
   <circle cx="500" cy="85" r="35" fill="url(#hodge-glow)" filter="url(#blur-filter)" />
   <circle cx="633" cy="182" r="35" fill="url(#flux-glow)" filter="url(#blur-filter)" />
   <circle cx="582" cy="338" r="35" fill="url(#morphic-glow)" filter="url(#blur-filter)" />
   <circle cx="418" cy="338" r="35" fill="url(#onsager-glow)" filter="url(#blur-filter)" />
   <circle cx="367" cy="182" r="35" fill="url(#turing-glow)" filter="url(#blur-filter)" />
+  
+  <circle cx="200" cy="100" r="30" fill="url(#p2p-glow)" filter="url(#blur-filter)" />
+  <circle cx="800" cy="100" r="30" fill="url(#ws-glow)" filter="url(#blur-filter)" />
 
   <!-- Core Active Crate Nodes -->
   <!-- Layer 0: Hodge -->
@@ -111,21 +132,37 @@
   <circle cx="367" cy="182" r="14" fill="#1E293B" stroke="#EC4899" stroke-width="3" />
   <circle cx="367" cy="182" r="5" fill="#EC4899" />
 
+  <!-- Phase 11: P2P Crate Node -->
+  <circle cx="200" cy="100" r="12" fill="#1E293B" stroke="#14B8A6" stroke-width="3" />
+  <circle cx="200" cy="100" r="4" fill="#14B8A6" />
+
+  <!-- Phase 12: WebSocket WebOS Node -->
+  <circle cx="800" cy="100" r="12" fill="#1E293B" stroke="#F43F5E" stroke-width="3" />
+  <circle cx="800" cy="100" r="4" fill="#F43F5E" />
+
   <!-- Text Annotations for Nodes -->
   <text x="500" y="55" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 0: TOPOLOGY</text>
   <text x="500" y="68" text-anchor="middle" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-hodge (DEC Matrix)</text>
 
-  <text x="735" y="180" text-anchor="start" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 1: HOMEOSTASIS</text>
-  <text x="735" y="193" text-anchor="start" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-flux (Active Inference)</text>
+  <text x="660" y="172" text-anchor="start" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 1: HOMEOSTASIS</text>
+  <text x="660" y="185" text-anchor="start" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-flux (Active Inference)</text>
 
-  <text x="675" y="342" text-anchor="start" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 2: SELF-MUTATION</text>
-  <text x="675" y="355" text-anchor="start" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-morphic (Morphic VM)</text>
+  <text x="610" y="342" text-anchor="start" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 2: SELF-MUTATION</text>
+  <text x="610" y="355" text-anchor="start" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-morphic (Morphic VM)</text>
 
-  <text x="325" y="342" text-anchor="end" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 3: THERMODYNAMICS</text>
-  <text x="325" y="355" text-anchor="end" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-onsager (Onsager Coalition)</text>
+  <text x="390" y="342" text-anchor="end" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 3: THERMODYNAMICS</text>
+  <text x="390" y="355" text-anchor="end" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-onsager (Onsager Coalition)</text>
 
-  <text x="275" y="180" text-anchor="end" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 4: MORPHOGENESIS</text>
-  <text x="275" y="193" text-anchor="end" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-turing (Turing Substrate)</text>
+  <text x="340" y="172" text-anchor="end" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 4: MORPHOGENESIS</text>
+  <text x="340" y="185" text-anchor="end" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-turing (Turing Substrate)</text>
+
+  <!-- Phase 11 P2P Annotation -->
+  <text x="180" y="80" text-anchor="end" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#14B8A6" letter-spacing="0.05em">P2P KADEMLIA TRANSPORT</text>
+  <text x="180" y="93" text-anchor="end" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">shivya-p2p (Thermodynamic UDP)</text>
+
+  <!-- Phase 12 WebSocket Annotation -->
+  <text x="820" y="80" text-anchor="start" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#F43F5E" letter-spacing="0.05em">WEBOS VISUALIZER BRIDGE</text>
+  <text x="820" y="93" text-anchor="start" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">ws://127.0.0.1:9002 (Non-Blocking)</text>
 
   <!-- Non-Dual Mathematical Centerpiece -->
   <rect x="390" y="200" width="220" height="50" rx="8" fill="rgba(15, 23, 42, 0.85)" stroke="#1E293B" stroke-width="1.5" />

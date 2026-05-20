@@ -186,14 +186,18 @@
         </section>
 
         <section id="quickstart">
-            <h2>Quickstart</h2>
-            <p>To compile the workspace and run the test suite locally:</p>
+            <h2>Quickstart & Local Simulation</h2>
+            <p>1. To compile the workspace and run the test suite locally:</p>
             <pre>cargo check --workspace&#x0A;cargo test --workspace</pre>
-            <p>To view the live WebAssembly-powered dashboard, run a local web server (e.g. <code>python3 -m http.server</code>) in the root and visit <code>http://localhost:8000/web/</code>.</p>
+            <p>2. To run the background native edge daemon with the **Live WebOS Visualizer WebSocket Bridge** enabled:</p>
+            <pre>cargo run --release -p shivya-cli -- start --port 8085 --visualize</pre>
+            <p>3. To launch a secondary bootstrap node connecting to the P2P mesh:</p>
+            <pre>cargo run --release -p shivya-cli -- start --port 8086 --peer 127.0.0.1:8085</pre>
+            <p>4. Serve the repository locally (e.g. <code>python3 -m http.server</code>) in the root and visit <code>http://localhost:8000/web/</code>. The dashboard will automatically connect to your local WebSocket bridge on port <code>9002</code> and stream real-world physical metrics live!</p>
         </section>
 
         <footer>
-            SHIVYA Project &copy; 2026. Released under the MIT License.
+            SHIVYA Project &copy; 2026. Released under the MIT and Apache 2.0 Licenses.
         </footer>
     </div>
 

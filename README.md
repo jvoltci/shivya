@@ -43,26 +43,48 @@ graph TD
 
 ---
 
+## Decentralized P2P Mesh Architecture
+
+To unify geographically separated hardware edge daemons into a cooperative statistical field, Shivya utilizes a decentralized peer-to-peer transport layer (`crates/shivya-p2p`):
+- **XOR Kademlia Routing (`src/routing.rs`):** Nodes generate a unique 160-bit identifier (`NodeId`) and maintain stack-allocated K-buckets ($K=4$). Stale nodes are kept at bay using an active **LRU Ping Eviction Guard**.
+- **Thermodynamic UDP Framing (`src/transport.rs`):** Low-overhead, zero-heap packet serialization that transmits state-difference vectors, parameter diffs, and simplicial splits across nodes in Big-Endian float format.
+
+---
+
 ## Native Edge Daemon CLI (`shivya-cli`)
 
-Shivya includes a high-performance native command-line daemon (`crates/shivya-cli`) configured with a multi-threaded Tokio runtime. It runs headless in the background, sampling physical hardware telemetry (CPU load and network throughput) to step the 5-layer active inference substrate in real-time.
+Shivya includes a high-performance native command-line daemon (`crates/shivya-cli`) configured with a multi-threaded Tokio runtime. It runs headless in the background, sampling physical hardware telemetry (CPU load and network throughput) to step the 5-layer active inference substrate in real-time, while bridging topology splits and state updates to a premium visualizer dashboard.
+
+### CLI Daemon Commands & Options
+
+The CLI `start` subcommand supports several options to configure the peer-to-peer network and live visualization bridge:
+
+- `--port <PORT>`: The UDP port to bind the P2P thermodynamic transport listener (defaults to `8085`).
+- `--peer <ADDR:PORT>`: Optional address of an existing peer to bootstrap into the causal simplicial network.
+- `--visualize`: Spawns a non-blocking WebSocket server on `127.0.0.1:9002` to stream physical telemetry, state-differences, and network graphs live to the WebOS observability dashboard.
 
 ### Running the CLI Daemon
 
-1. **Start the Headless Background Daemon**:
+1. **Start a Seed Node with Live Visualization**:
    ```bash
-   cargo run --release -p shivya-cli -- start
+   cargo run --release -p shivya-cli -- start --port 8085 --visualize
    ```
    *Note: On startup, the daemon automatically cleans up any stale Unix Domain Sockets (UDS) and binds safely to `/tmp/shivya_cli.sock`.*
 
-2. **Query Substrate Registry Status**:
-   Connects to the background UDS server to fetch and print the real-time active inference, VM mutation, and topological metrics.
+2. **Boot up a Bootstrap Peer Node**:
+   Connects to the seed node, building a mutual causal simplicial network:
+   ```bash
+   cargo run --release -p shivya-cli -- start --port 8086 --peer 127.0.0.1:8085
+   ```
+
+3. **Query Substrate Registry Status**:
+   Connects to the local background UDS server to fetch and print the real-time active inference, VM mutation, and topological metrics:
    ```bash
    cargo run --release -p shivya-cli -- status
    ```
 
-3. **Graceful Teardown**:
-   Send a `SIGINT` (Ctrl+C) or `SIGTERM` signal to trigger orderly apoptotic memory cleanup and unbind the socket file.
+4. **Graceful Teardown**:
+   Send a `SIGINT` (Ctrl+C) or `SIGTERM` signal to trigger orderly apoptotic memory cleanup, unbind the socket file, and notify connected peers.
 
 ---
 
@@ -147,6 +169,7 @@ All core modules are zero-dependency, stack-allocated, and target WebAssembly (`
 - [`crates/shivya-morphic`](https://crates.io/crates/shivya-morphic) - Layer 2 Sandboxed metamorphic register VM
 - [`crates/shivya-onsager`](https://crates.io/crates/shivya-onsager) - Layer 3 Thermodynamic multi-agent ensemble
 - [`crates/shivya-turing`](https://crates.io/crates/shivya-turing) - Layer 4 Network reaction-diffusion morphogenesis
+- [`crates/shivya-p2p`](https://crates.io/crates/shivya-p2p) - Decentralized Kademlia P2P transport & UDP network mesh
 - [`crates/telemetry_wasm`](https://crates.io/crates/telemetry_wasm) - Unified Substrate WASM telemetry bindings
 - [`crates/shivya-cli`](https://crates.io/crates/shivya-cli) - High-performance native background daemon & Tokyo-UDS CLI tool
 

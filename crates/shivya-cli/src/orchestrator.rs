@@ -4,6 +4,24 @@ use shivya::morphic::{DynamicGibbsAgent, Expr, MorphicHotSwapper, compile};
 use shivya::onsager::OnsagerCollectiveEnsemble;
 use shivya::turing::{MorphogenSystem, MitosisEngine, ApoptosisEngine};
 use serde::{Serialize, Deserialize};
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use shivya_p2p::routing::{NodeId, KBucketTable};
+use shivya_p2p::transport::UdpTransport;
+use shivya_p2p::protocol::{Frame, FramePayload};
+
+fn lead_zeros_bytes(dist: &[u8; 20]) -> usize {
+    let mut count = 0;
+    for &byte in dist {
+        if byte == 0 {
+            count += 8;
+        } else {
+            count += byte.leading_zeros() as usize;
+            break;
+        }
+    }
+    count
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NodeStatus {
@@ -25,6 +43,8 @@ pub struct SystemStatus {
     pub active_nodes_count: usize,
     pub active_pool: Vec<usize>,
     pub nodes: Vec<NodeStatus>,
+    pub step_count: usize,
+    pub edges: Vec<(usize, usize)>,
 }
 
 pub struct NativeOrchestrator {
@@ -37,6 +57,11 @@ pub struct NativeOrchestrator {
     pub apoptosis: ApoptosisEngine,
     pub step_count: usize,
     pub last_status: SystemStatus,
+    
+    // Phase 11 P2P Fields
+    pub self_id: NodeId,
+    pub p2p_table: Option<Arc<Mutex<KBucketTable>>>,
+    pub p2p_transport: Option<Arc<UdpTransport>>,
 }
 
 impl NativeOrchestrator {
@@ -114,7 +139,11 @@ impl NativeOrchestrator {
             active_nodes_count: 3,
             active_pool: vec![0, 1, 2],
             nodes: Vec::new(),
+            step_count: 0,
+            edges: vec![(0, 1), (1, 2), (0, 2)],
         };
+
+        let self_id = NodeId::random();
 
         Self {
             max_nodes,
@@ -126,11 +155,47 @@ impl NativeOrchestrator {
             apoptosis,
             step_count: 0,
             last_status,
+            self_id,
+            p2p_table: None,
+            p2p_transport: None,
         }
+    }
+
+    pub fn set_p2p(
+        &mut self,
+        self_id: NodeId,
+        p2p_table: Arc<Mutex<KBucketTable>>,
+        p2p_transport: Arc<UdpTransport>,
+    ) {
+        self.self_id = self_id;
+        self.p2p_table = Some(p2p_table);
+        self.p2p_transport = Some(p2p_transport);
     }
 
     pub fn step(&mut self, cpu_load: f64, net_rate: f64) {
         self.step_count += 1;
+
+        // 0. Sync K-bucket peers to Layer 0 Hodge Simplicial Complex and Onsager connections
+        if let Some(ref table) = self.p2p_table {
+            if let Ok(table_lock) = table.try_lock() {
+                let peers = table_lock.all_peers();
+                for peer in peers {
+                    let mut peer_label = String::new();
+                    for &b in &peer.id.0[0..4] {
+                        peer_label.push_str(&format!("{:02x}", b));
+                    }
+                    peer_label = format!("Peer_{}", peer_label);
+
+                    // Convert XOR distance to edge state in DEC
+                    let dist = self.self_id.xor_distance(&peer.id);
+                    let lead_zeros = lead_zeros_bytes(&dist);
+                    let scaled_dist = 1.0 - (lead_zeros as f64 / 160.0);
+                    
+                    self.complex.add_vertex(&peer_label, 1.0);
+                    let _ = self.complex.add_edge("Node0", &peer_label, scaled_dist);
+                }
+            }
+        }
 
         // 1. Gather active status
         let mut active_indices = Vec::new();
@@ -159,7 +224,6 @@ impl NativeOrchestrator {
         }
 
         // Step Onsager Collective Ensemble for active nodes
-        // Since step() iterates over all agents, we only pass non-zero values to active ones
         let collective_f = self.ensemble.step(&obs, 0.1, 10, 1e-4, 0.1);
 
         // 3. Morphic Hot-swapping VM updates
@@ -184,7 +248,6 @@ impl NativeOrchestrator {
             .sum::<f64>().sqrt();
 
         // 5. Gierer-Meinhardt reaction diffusion step (Layer 4)
-        // Runge-Kutta 4th order system updates with CFL stability guard
         self.turing.step_rk4(0.05);
 
         // Extract beliefs and adjacency lists for mitosis/apoptosis
@@ -213,8 +276,6 @@ impl NativeOrchestrator {
         if let Some(_pruned_node) = self.apoptosis.evaluate_and_prune(&mut self.turing, &mut beliefs, &mut adjacent_nodes, &free_energies, 5.0) {
             // Sync changes back
             self.ensemble.adjacent_nodes = adjacent_nodes;
-            // Sever edge in Hodge Mesh complex by setting weight to zero or state subtraction
-            // Note: Since SimplicialStateComplex is fixed-size during execution loop run, we keep it as is.
         }
 
         // 8. Capture updated status state
@@ -236,13 +297,72 @@ impl NativeOrchestrator {
             });
         }
 
+        let mut edges = Vec::new();
+        for &u in &active_indices {
+            if u < self.ensemble.adjacent_nodes.len() {
+                for &v in &self.ensemble.adjacent_nodes[u] {
+                    if u < v && active_indices.contains(&v) {
+                        edges.push((u, v));
+                    }
+                }
+            }
+        }
+
         self.last_status = SystemStatus {
             collective_free_energy: collective_f,
             curl_deviation,
             active_nodes_count: active_indices.len(),
             active_pool: active_indices,
             nodes: nodes_status,
+            step_count: self.step_count,
+            edges,
         };
+
+        // 9. Broadcast thermodynamic state to all discovered peers
+        if let Some(ref transport) = self.p2p_transport {
+            if let Some(ref table) = self.p2p_table {
+                if let Ok(table_lock) = table.try_lock() {
+                    let peers = table_lock.all_peers();
+                    let fe = self.last_status.collective_free_energy;
+                    let pr = self.last_status.active_nodes_count as f64;
+                    let push_frame = Frame {
+                        sender: self.self_id,
+                        payload: FramePayload::ThermodynamicPush {
+                            free_energy: fe,
+                            pressure: pr,
+                        },
+                    };
+                    for peer in peers {
+                        let tx = Arc::clone(&transport.socket);
+                        let mut buf = [0u8; 100];
+                        if let Ok(size) = push_frame.serialize(&mut buf) {
+                            tokio::spawn(async move {
+                                let _ = tx.send_to(&buf[..size], peer.address).await;
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn handle_p2p_frame(&mut self, frame: Frame) {
+        match frame.payload {
+            FramePayload::ThermodynamicPush { free_energy, pressure } => {
+                println!("[P2P Sync] Received ThermodynamicPush from {:?}: Free Energy = {:.4}, Pressure = {:.4}", frame.sender, free_energy, pressure);
+                // Perturb beliefs slightly to represent incoming peer pressure
+                if !self.ensemble.agents.is_empty() {
+                    self.ensemble.agents[0].mu_q[0] += free_energy * 0.01;
+                }
+            }
+            FramePayload::GradientDiff { target_id: _, coefficient, flow } => {
+                println!("[P2P Sync] Received GradientDiff from {:?}: Coeff = {:.4}, Flow = {:.4}", frame.sender, coefficient, flow);
+                if !self.ensemble.agents.is_empty() {
+                    self.ensemble.agents[0].mu_q[0] += flow * coefficient * 0.1;
+                }
+            }
+            _ => {}
+        }
     }
 
     pub fn get_status_json(&self) -> String {

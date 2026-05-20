@@ -1,5 +1,10 @@
 # Shivya: The Non-Dual Distributed Computing Substrate
 
+[![CI Build](https://github.com/jvoltci/shivya/actions/workflows/test.yml/badge.svg)](https://github.com/jvoltci/shivya/actions)
+[![crates.io](https://img.shields.io/crates/v/shivya.svg)](https://crates.io/crates/shivya)
+[![docs.rs](https://docs.rs/shivya/badge.svg)](https://docs.rs/shivya)
+[![License](https://img.shields.io/crates/l/shivya.svg)](https://github.com/jvoltci/shivya/blob/master/LICENSE-MIT)
+
 ![Shivya Architecture Hero Banner](docs/assets/hero.svg)
 
 Shivya is a bare-metal, zero-dependency, edge-native distributed substrate. It discards dualistic, clock-synchronized consensus models (e.g. Paxos, Raft, Nakamoto Consensus) in favor of a continuous, thermodynamic geometric manifold driven by Discrete Exterior Calculus and Variational Free Energy minimization.
@@ -16,25 +21,48 @@ graph TD
     Layer1 --> Layer0["Layer 0: Hodge Mesh (Simplicial Boundary Reconciler)"]
 ```
 
-### Layer 0: Topological Fabric (`shivya-hodge`)
+### Layer 0: Topological Fabric [`shivya-hodge`](https://crates.io/crates/shivya-hodge)
 - **Core Abstraction:** Simplicial State Complexes and Discrete Exterior Calculus (DEC).
 - **Function:** Solves structural boundary flow equations using an iterative Conjugate Gradient solver. It partitions concurrent network partitions into a gradient flow (non-conflicting mutations) and a curl flow (rotational conflict loops), projecting out the curl to arrive at consistent states deterministically without time locks.
 
-### Layer 1: Predictive Homeostasis (`shivya-flux`)
+### Layer 1: Predictive Homeostasis [`shivya-flux`](https://crates.io/crates/shivya-flux)
 - **Core Abstraction:** Variational Free Energy Principle (FEP).
 - **Function:** Represents nodes as Active Inference Agents bound by statistical Markov Blankets. Nodes minimize Variational Free Energy ($F$) via continuous gradient descent over internal belief parameters to adapt to non-stationary sensorimotor telemetry.
 
-### Layer 2: Autotelic Morphic Core (`shivya-morphic`)
+### Layer 2: Autotelic Morphic Core [`shivya-morphic`](https://crates.io/crates/shivya-morphic)
 - **Core Abstraction:** Metamorphic VM Hot-Swapping & State Space Expansion.
 - **Function:** Evaluates structural update loops inside a sandboxed, stack-allocated Register VM with strict instruction cycle budgets. When moving average free energy breaches novelty thresholds, the node expands its generative state dimensions (e.g., from 2D to 3D) and rewrites its execution bytecode.
 
-### Layer 3: Thermodynamic Collective Ensemble (`shivya-onsager`)
+### Layer 3: Thermodynamic Collective Ensemble [`shivya-onsager`](https://crates.io/crates/shivya-onsager)
 - **Core Abstraction:** Onsager Reciprocal Relations & Game-Theoretic FEP.
 - **Function:** Regulates parameter and workload migration across blankets via symmetric conductance couplings ($L_{ij} = L_{ji}$). Computes global Collective Free Energy ($\mathcal{F}_{\text{collective}}$) by resolving Harsanyi dividends recursively over adjacent neighbor coalitions to enforce cooperative synergy.
 
-### Layer 4: Morphogenetic Pattern Substrate (`shivya-turing`)
+### Layer 4: Morphogenetic Pattern Substrate [`shivya-turing`](https://crates.io/crates/shivya-turing)
 - **Core Abstraction:** Non-linear Graph Reaction-Diffusion & Network Plasticity.
 - **Function:** Solves activator-inhibitor partial differential equations using Runge-Kutta 4th Order (RK4) integration with dynamic CFL stability guards. High-stress activator hotspots trigger zero-allocation vertex mitosis (node splits), while low-utility nodes undergo apoptosis (culling) to optimize global resource usage.
+
+---
+
+## Native Edge Daemon CLI (`shivya-cli`)
+
+Shivya includes a high-performance native command-line daemon (`crates/shivya-cli`) configured with a multi-threaded Tokio runtime. It runs headless in the background, sampling physical hardware telemetry (CPU load and network throughput) to step the 5-layer active inference substrate in real-time.
+
+### Running the CLI Daemon
+
+1. **Start the Headless Background Daemon**:
+   ```bash
+   cargo run --release -p shivya-cli -- start
+   ```
+   *Note: On startup, the daemon automatically cleans up any stale Unix Domain Sockets (UDS) and binds safely to `/tmp/shivya_cli.sock`.*
+
+2. **Query Substrate Registry Status**:
+   Connects to the background UDS server to fetch and print the real-time active inference, VM mutation, and topological metrics.
+   ```bash
+   cargo run --release -p shivya-cli -- status
+   ```
+
+3. **Graceful Teardown**:
+   Send a `SIGINT` (Ctrl+C) or `SIGTERM` signal to trigger orderly apoptotic memory cleanup and unbind the socket file.
 
 ---
 
@@ -113,13 +141,14 @@ fn main() {
 
 ## Crate Layout & Distribution namespaces
 
-All modules are zero-dependency, stack-allocated, and target WebAssembly (`wasm32-unknown-unknown`):
-- `crates/shivya-hodge` - Layer 0 Simplicial exterior calculus
-- `crates/shivya-flux` - Layer 1 Homeostatic Active Inference agent
-- `crates/shivya-morphic` - Layer 2 Sandboxed metamorphic register VM
-- `crates/shivya-onsager` - Layer 3 Thermodynamic multi-agent ensemble
-- `crates/shivya-turing` - Layer 4 Network reaction-diffusion morphogenesis
-- `crates/telemetry_wasm` - Unified Substrate WASM telemetry bindings
+All core modules are zero-dependency, stack-allocated, and target WebAssembly (`wasm32-unknown-unknown`):
+- [`crates/shivya-hodge`](https://crates.io/crates/shivya-hodge) - Layer 0 Simplicial exterior calculus
+- [`crates/shivya-flux`](https://crates.io/crates/shivya-flux) - Layer 1 Homeostatic Active Inference agent
+- [`crates/shivya-morphic`](https://crates.io/crates/shivya-morphic) - Layer 2 Sandboxed metamorphic register VM
+- [`crates/shivya-onsager`](https://crates.io/crates/shivya-onsager) - Layer 3 Thermodynamic multi-agent ensemble
+- [`crates/shivya-turing`](https://crates.io/crates/shivya-turing) - Layer 4 Network reaction-diffusion morphogenesis
+- [`crates/telemetry_wasm`](https://crates.io/crates/telemetry_wasm) - Unified Substrate WASM telemetry bindings
+- [`crates/shivya-cli`](https://crates.io/crates/shivya-cli) - High-performance native background daemon & Tokyo-UDS CLI tool
 
 ---
 

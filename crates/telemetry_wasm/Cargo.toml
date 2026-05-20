@@ -7,9 +7,9 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-shivya-hodge = { path = "../shivya-hodge" }
-shivya-flux = { path = "../shivya-flux" }
-shivya-morphic = { path = "../shivya-morphic" }
-shivya-onsager = { path = "../shivya-onsager" }
+shivya-hodge = { version = "0.1.0", path = "../shivya-hodge" }
+shivya-flux = { version = "0.1.0", path = "../shivya-flux" }
+shivya-morphic = { version = "0.1.0", path = "../shivya-morphic" }
+shivya-onsager = { version = "0.1.0", path = "../shivya-onsager" }
 wasm-bindgen = "0.2"
 getrandom = { version = "0.2", features = ["js"] }

@@ -1,62 +1,139 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 450" width="100%" height="100%">
   <defs>
+    <!-- Background Gradient -->
     <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F9FAFB" />
-      <stop offset="100%" stop-color="#F3F4F6" />
+      <stop offset="0%" stop-color="#070A13" />
+      <stop offset="50%" stop-color="#0C0F1D" />
+      <stop offset="100%" stop-color="#070A13" />
     </linearGradient>
-    <radialGradient id="node-genesis" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1F2937" />
-      <stop offset="100%" stop-color="#111827" />
+
+    <!-- Glowing Node Gradients -->
+    <radialGradient id="hodge-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#3B82F6" stop-opacity="0" />
     </radialGradient>
-    <radialGradient id="node-b" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#60A5FA" />
-      <stop offset="100%" stop-color="#2563EB" />
+    <radialGradient id="flux-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
     </radialGradient>
-    <radialGradient id="node-c" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#F472B6" />
-      <stop offset="100%" stop-color="#DB2777" />
+    <radialGradient id="morphic-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0" />
     </radialGradient>
-    <radialGradient id="node-merge" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#818CF8" />
-      <stop offset="100%" stop-color="#4F46E5" />
+    <radialGradient id="onsager-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0" />
     </radialGradient>
-    <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9CA3AF" />
-    </marker>
-    <marker id="arrow-reconciled" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#10B981" />
-    </marker>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.08" />
+    <radialGradient id="turing-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#EC4899" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#EC4899" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Line Gradients -->
+    <linearGradient id="flow-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+    <linearGradient id="flow-grad-2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+    <linearGradient id="flow-grad-3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+    <linearGradient id="flow-grad-4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6" />
+      <stop offset="100%" stop-color="#EC4899" />
+    </linearGradient>
+    <linearGradient id="flow-grad-5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EC4899" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+
+    <filter id="blur-filter" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" />
     </filter>
   </defs>
 
-  <rect width="800" height="400" rx="16" fill="url(#bg-grad)" />
-  <path d="M 50,200 Q 200,100 400,200 T 750,200" fill="none" stroke="#E5E7EB" stroke-width="1.5" stroke-dasharray="6,6" />
-  <path d="M 50,230 Q 200,130 400,230 T 750,230" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,4" />
+  <!-- Background Card -->
+  <rect width="1000" height="450" rx="16" fill="url(#bg-grad)" stroke="#1E293B" stroke-width="1.5" />
 
-  <polygon points="400,100 400,300 650,200" fill="rgba(79, 70, 229, 0.04)" stroke="rgba(79, 70, 229, 0.12)" stroke-width="1.5" stroke-dasharray="4,4" />
+  <!-- Grid Pattern Overlay -->
+  <g opacity="0.05">
+    <path d="M 0,50 L 1000,50 M 0,100 L 1000,100 M 0,150 L 1000,150 M 0,200 L 1000,200 M 0,250 L 1000,250 M 0,300 L 1000,300 M 0,350 L 1000,350 M 0,400 L 1000,400" stroke="#FFFFFF" stroke-width="1" />
+    <path d="M 100,0 L 100,450 M 200,0 L 200,450 M 300,0 L 300,450 M 400,0 L 400,450 M 500,0 L 500,450 M 600,0 L 600,450 M 700,0 L 700,450 M 800,0 L 800,450 M 900,0 L 900,450" stroke="#FFFFFF" stroke-width="1" />
+  </g>
 
-  <line x1="150" y1="200" x2="400" y2="100" stroke="#9CA3AF" stroke-width="2.5" marker-end="url(#arrow)" />
-  <line x1="150" y1="200" x2="400" y2="300" stroke="#9CA3AF" stroke-width="2.5" marker-end="url(#arrow)" />
-  <line x1="400" y1="300" x2="400" y2="100" stroke="#EF4444" stroke-width="2.5" stroke-dasharray="4,2" marker-end="url(#arrow)" />
-  <line x1="400" y1="100" x2="650" y2="200" stroke="#10B981" stroke-width="3" marker-end="url(#arrow-reconciled)" />
-  <line x1="400" y1="300" x2="650" y2="200" stroke="#10B981" stroke-width="3" marker-end="url(#arrow-reconciled)" />
+  <!-- Non-Dual Causal Flow Ring (Underlay) -->
+  <circle cx="500" cy="225" r="140" fill="none" stroke="rgba(255, 255, 255, 0.03)" stroke-width="2" />
+  <circle cx="500" cy="225" r="140" fill="none" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="10 30" opacity="0.6">
+    <animateTransform attributeName="transform" type="rotate" from="0 500 225" to="360 500 225" dur="40s" repeatCount="indefinite" />
+  </circle>
 
-  <circle cx="150" cy="200" r="20" fill="url(#node-genesis)" filter="url(#shadow)" />
-  <text x="150" y="235" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="12" font-weight="600" fill="#374151">genesis</text>
+  <!-- Layer Connectivity Lines -->
+  <!-- Hodge to Flux -->
+  <line x1="500" y1="85" x2="633" y2="182" stroke="url(#flow-grad-1)" stroke-width="2.5" stroke-linecap="round" />
+  <!-- Flux to Morphic -->
+  <line x1="633" y1="182" x2="582" y2="338" stroke="url(#flow-grad-2)" stroke-width="2.5" stroke-linecap="round" />
+  <!-- Morphic to Onsager -->
+  <line x1="582" y1="338" x2="418" y2="338" stroke="url(#flow-grad-3)" stroke-width="2.5" stroke-linecap="round" />
+  <!-- Onsager to Turing -->
+  <line x1="418" y1="338" x2="367" y2="182" stroke="url(#flow-grad-4)" stroke-width="2.5" stroke-linecap="round" />
+  <!-- Turing to Hodge -->
+  <line x1="367" y1="182" x2="500" y2="85" stroke="url(#flow-grad-5)" stroke-width="2.5" stroke-linecap="round" />
 
-  <circle cx="400" cy="100" r="20" fill="url(#node-b)" filter="url(#shadow)" />
-  <text x="400" y="70" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="12" font-weight="600" fill="#374151">tx_B_1 (Offline)</text>
+  <!-- Glowing Aura Backdrops -->
+  <circle cx="500" cy="85" r="35" fill="url(#hodge-glow)" filter="url(#blur-filter)" />
+  <circle cx="633" cy="182" r="35" fill="url(#flux-glow)" filter="url(#blur-filter)" />
+  <circle cx="582" cy="338" r="35" fill="url(#morphic-glow)" filter="url(#blur-filter)" />
+  <circle cx="418" cy="338" r="35" fill="url(#onsager-glow)" filter="url(#blur-filter)" />
+  <circle cx="367" cy="182" r="35" fill="url(#turing-glow)" filter="url(#blur-filter)" />
 
-  <circle cx="400" cy="300" r="20" fill="url(#node-c)" filter="url(#shadow)" />
-  <text x="400" y="335" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="12" font-weight="600" fill="#374151">tx_C_1 (Offline)</text>
+  <!-- Core Active Crate Nodes -->
+  <!-- Layer 0: Hodge -->
+  <circle cx="500" cy="85" r="14" fill="#1E293B" stroke="#3B82F6" stroke-width="3" />
+  <circle cx="500" cy="85" r="5" fill="#3B82F6" />
 
-  <circle cx="650" cy="200" r="20" fill="url(#node-merge)" filter="url(#shadow)" />
-  <text x="650" y="235" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="12" font-weight="600" fill="#374151">tx_merge (Synced)</text>
+  <!-- Layer 1: Flux -->
+  <circle cx="633" cy="182" r="14" fill="#1E293B" stroke="#10B981" stroke-width="3" />
+  <circle cx="633" cy="182" r="5" fill="#10B981" />
 
-  <rect x="250" y="185" width="300" height="30" rx="6" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1" filter="url(#shadow)" />
-  <text x="400" y="204" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#4F46E5">
-    ΔS_reconciled = ΔS - d1^T * (L2^+ * d1 * ΔS)
+  <!-- Layer 2: Morphic -->
+  <circle cx="582" cy="338" r="14" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
+  <circle cx="582" cy="338" r="5" fill="#F59E0B" />
+
+  <!-- Layer 3: Onsager -->
+  <circle cx="418" cy="338" r="14" fill="#1E293B" stroke="#8B5CF6" stroke-width="3" />
+  <circle cx="418" cy="338" r="5" fill="#8B5CF6" />
+
+  <!-- Layer 4: Turing -->
+  <circle cx="367" cy="182" r="14" fill="#1E293B" stroke="#EC4899" stroke-width="3" />
+  <circle cx="367" cy="182" r="5" fill="#EC4899" />
+
+  <!-- Text Annotations for Nodes -->
+  <text x="500" y="55" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 0: TOPOLOGY</text>
+  <text x="500" y="68" text-anchor="middle" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-hodge (DEC Matrix)</text>
+
+  <text x="735" y="180" text-anchor="start" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 1: HOMEOSTASIS</text>
+  <text x="735" y="193" text-anchor="start" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-flux (Active Inference)</text>
+
+  <text x="675" y="342" text-anchor="start" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 2: SELF-MUTATION</text>
+  <text x="675" y="355" text-anchor="start" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-morphic (Morphic VM)</text>
+
+  <text x="325" y="342" text-anchor="end" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 3: THERMODYNAMICS</text>
+  <text x="325" y="355" text-anchor="end" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-onsager (Onsager Coalition)</text>
+
+  <text x="275" y="180" text-anchor="end" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 4: MORPHOGENESIS</text>
+  <text x="275" y="193" text-anchor="end" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-turing (Turing Substrate)</text>
+
+  <!-- Non-Dual Mathematical Centerpiece -->
+  <rect x="390" y="200" width="220" height="50" rx="8" fill="rgba(15, 23, 42, 0.85)" stroke="#1E293B" stroke-width="1.5" />
+  <text x="500" y="222" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#38BDF8">ΔS = d*p + δ*q</text>
+  <text x="500" y="238" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#64748B">Non-Dual Hodge Decomposition</text>
+
+  <!-- Ambient Philosophy Quote -->
+  <text x="500" y="420" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="13" font-style="italic" fill="#94A3B8">
+    "Truth is not a static global variable; it is a harmonic field flowing through a causal manifold."
   </text>
 </svg>

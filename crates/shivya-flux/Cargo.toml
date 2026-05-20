@@ -5,6 +5,9 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "A first-principles non-dual distributed computing substrate pairing discrete exterior calculus with hierarchical active inference."
 keywords = ["active-inference", "exterior-calculus", "distributed-systems", "wasm", "morphogenesis"]
+homepage = "https://github.com/jvoltci/shivya"
+repository = "https://github.com/jvoltci/shivya"
+documentation = "https://docs.rs/shivya-flux"
 
 [dependencies]
-shivya-hodge = { path = "../shivya-hodge" }
+shivya-hodge = { version = "0.1.0", path = "../shivya-hodge" }

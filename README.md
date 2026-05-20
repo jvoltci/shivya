@@ -1,5 +1,7 @@
 # Shivya: The Non-Dual Distributed Computing Substrate
 
+![Shivya Architecture Hero Banner](docs/assets/hero.svg)
+
 Shivya is a bare-metal, zero-dependency, edge-native distributed substrate. It discards dualistic, clock-synchronized consensus models (e.g. Paxos, Raft, Nakamoto Consensus) in favor of a continuous, thermodynamic geometric manifold driven by Discrete Exterior Calculus and Variational Free Energy minimization.
 
 ---

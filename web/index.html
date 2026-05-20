@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHIVYA: The Non-Dual Substrate | Observability Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --border-color: #E2E8F0;
+            --accent-indigo: #6366F1;
+            --accent-teal: #14B8A6;
+            --accent-rose: #F43F5E;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding: 2.5rem;
+            line-height: 1.5;
+        }
+
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 2.5rem auto;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+        .header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-top: 0.25rem;
+        }
+
+        .dashboard-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            margin-bottom: 2rem;
+        }
+        .card h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .svg-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #F8FAFC;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .control-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            background-color: #FCFDFE;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-indigo);
+        }
+        button {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-primary {
+            background-color: var(--accent-indigo);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4F46E5;
+        }
+        .btn-secondary {
+            background-color: #F1F5F9;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background-color: #E2E8F0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-box {
+            background: #F8FAFC;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .stat-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-indigo);
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+
+        .node-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .node-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            background: #FCFDFE;
+        }
+        .node-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .node-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-active { background: rgba(20, 184, 166, 0.1); color: var(--accent-teal); }
+        .badge-hotswap { background: rgba(244, 63, 94, 0.1); color: var(--accent-rose); animation: pulse 1s infinite alternate; }
+        
+        .node-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        .node-code {
+            font-family: monospace;
+            background: #F8FAFC;
+            padding: 0.4rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .console {
+            background: #0F172A;
+            color: #38BDF8;
+            font-family: monospace;
+            padding: 1.25rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            height: 220px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid #1E293B;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>SHIVYA: The Non-Dual Substrate</h1>
+        <p>Unified 4-Layer Symbiont Execution & Telemetry Pipeline (Rust / WASM)</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="left-col">
+            <!-- Simplicial Complex Card -->
+            <div class="card">
+                <h2>
+                    <span>Layer 0: HodgeMesh Complex</span>
+                    <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-secondary);">Ensemble Topology</span>
+                </h2>
+                <div class="svg-container">
+                    <svg id="topology-svg" width="400" height="300" style="overflow: visible;">
+                        <!-- Triangle Area -->
+                        <polygon id="triangle-poly" points="200,50 100,250 300,250" fill="rgba(99, 102, 241, 0.08)" stroke="rgba(99, 102, 241, 0.2)" stroke-dasharray="4"/>
+                        
+                        <!-- Edges -->
+                        <line x1="200" y1="50" x2="100" y2="250" stroke="#94A3B8" stroke-width="2"/>
+                        <line x1="100" y1="250" x2="300" y2="250" stroke="#94A3B8" stroke-width="2"/>
+                        <line x1="200" y1="50" x2="300" y2="250" stroke="#94A3B8" stroke-width="2"/>
+                        
+                        <!-- Vertices -->
+                        <circle cx="200" cy="50" r="18" fill="white" stroke="#6366F1" stroke-width="3"/>
+                        <text x="200" y="55" text-anchor="middle" font-family="'Outfit'" font-weight="bold" font-size="12" fill="#0F172A">Node0</text>
+                        
+                        <circle cx="100" cy="250" r="18" fill="white" stroke="#6366F1" stroke-width="3"/>
+                        <text x="100" y="255" text-anchor="middle" font-family="'Outfit'" font-weight="bold" font-size="12" fill="#0F172A">Node1</text>
+                        
+                        <circle cx="300" cy="250" r="18" fill="white" stroke="#6366F1" stroke-width="3"/>
+                        <text x="300" y="255" text-anchor="middle" font-family="'Outfit'" font-weight="bold" font-size="12" fill="#0F172A">Node2</text>
+                    </svg>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-collective-f">-</div>
+                        <div class="stat-label">Collective F</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-curl-dev">-</div>
+                        <div class="stat-label">Curl Deviation</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="stat-step-count">0</div>
+                        <div class="stat-label">Steps Run</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <button class="btn-primary" style="width: 100%;" id="btn-orchestrate">Execute Unified Simulation Step</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <!-- Active Inference & Morphic VM Card -->
+            <div class="card">
+                <h2>Ensemble Nodes (Layer 1, 2, & 3)</h2>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label class="control-label">Load & Latency Observations (Node Inputs)</label>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">Node 0 (Load/Latency):</span>
+                            <input type="text" id="node-0-obs" value="1.5, 0.8">
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">Node 1 (Load/Latency):</span>
+                            <input type="text" id="node-1-obs" value="2.0, 1.2">
+                        </div>
+                        <div>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">Node 2 (Load/Latency):</span>
+                            <input type="text" id="node-2-obs" value="1.8, 1.0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="node-list" id="nodes-container">
+                    <div class="node-card">
+                        <div class="node-card-header">
+                            <span>Node 0</span>
+                            <span class="node-badge badge-active">Active</span>
+                        </div>
+                        <div class="node-meta">Free Energy: - | Dimension: 2D</div>
+                        <div class="node-meta">Beliefs: -</div>
+                        <div class="node-code">Expr::Mul(Const(1.0), Var(0))</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Telemetry Console -->
+            <div class="card">
+                <h2>Live Symbiont Telemetry</h2>
+                <div class="console" id="console-log">Initializing WASM Substrate Orchestrator...</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import init, { SubstrateOrchestrator } from "./pkg/telemetry_wasm.js";
+
+        const logElem = document.getElementById("console-log");
+        function log(msg) {
+            logElem.innerText += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
+            logElem.scrollTop = logElem.scrollHeight;
+        }
+
+        async function run() {
+            try {
+                // Initialize WASM
+                await init();
+                log("WASM Substrate Orchestrator loaded successfully.");
+
+                // Instantiate Orchestrator
+                const orchestrator = new SubstrateOrchestrator();
+                log("Unified Substrate Orchestrator instantiated with 3 active nodes.");
+
+                let stepCounter = 0;
+
+                // Handle step execution click
+                document.getElementById("btn-orchestrate").addEventListener("click", () => {
+                    stepCounter++;
+                    
+                    // Parse inputs from UI
+                    const n0 = document.getElementById("node-0-obs").value.split(",").map(parseFloat);
+                    const n1 = document.getElementById("node-1-obs").value.split(",").map(parseFloat);
+                    const n2 = document.getElementById("node-2-obs").value.split(",").map(parseFloat);
+                    
+                    const inputs = [...n0, ...n1, ...n2];
+                    log(`Loaded Observations: N0=[${n0.join(",")}] N1=[${n1.join(",")}] N2=[${n2.join(",")}]`);
+                    
+                    // Execute unified 4-layer step loop in WebAssembly
+                    const jsonPayload = orchestrator.step(inputs);
+                    const data = JSON.parse(jsonPayload);
+                    
+                    // Update main panel stats
+                    document.getElementById("stat-collective-f").innerText = data.collective_free_energy.toFixed(4);
+                    document.getElementById("stat-curl-dev").innerText = data.curl_deviation.toFixed(4);
+                    document.getElementById("stat-step-count").innerText = stepCounter;
+                    
+                    // Update node list elements
+                    const nodesContainer = document.getElementById("nodes-container");
+                    nodesContainer.innerHTML = "";
+                    
+                    data.nodes.forEach(node => {
+                        const card = document.createElement("div");
+                        card.className = "node-card";
+                        
+                        const badgeClass = node.hotswapped ? "badge-hotswap" : "badge-active";
+                        const badgeText = node.hotswapped ? "Hotswapped 🦀" : "Stable";
+                        
+                        card.innerHTML = `
+                            <div class="node-card-header">
+                                <span>Node ${node.id}</span>
+                                <span class="node-badge ${badgeClass}">${badgeText}</span>
+                            </div>
+                            <div class="node-meta">Free Energy (F): ${node.free_energy.toFixed(4)} | Dim: ${node.belief_dim}D</div>
+                            <div class="node-meta">Belief Coordinates (mu_q): [${node.beliefs.join(", ")}]</div>
+                            <div class="node-code">${node.morphic_equation}</div>
+                        `;
+                        nodesContainer.appendChild(card);
+                    });
+
+                    log(`Step ${stepCounter} Completed. Collective F: ${data.collective_free_energy.toFixed(4)} | Curl Deviation: ${data.curl_deviation.toFixed(4)}`);
+                });
+
+            } catch (err) {
+                log(`Error running substrate orchestrator: ${err}`);
+            }
+        }
+
+        run();
+    </script>
+</body>
+</html>

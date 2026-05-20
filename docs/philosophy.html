@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHIVYA: The Non-Dual Substrate | Philosophy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- MathJax for rendering equations -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --border-color: #E5E7EB;
+            --accent-color: #4F46E5;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+        }
+        header { margin-bottom: 2.5rem; }
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        p { margin-bottom: 1.25rem; color: var(--text-secondary); }
+        ul { margin-left: 1.5rem; margin-bottom: 1.25rem; color: var(--text-secondary); }
+        li { margin-bottom: 0.5rem; }
+        .math-block {
+            background-color: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+        footer {
+            margin-top: 3rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a class="back-link" href="index.html">← Back to Home</a>
+        <header>
+            <h1>SHIVYA Core Philosophy</h1>
+            <p>Homeostasis vs. Consensus Theory</p>
+        </header>
+
+        <section>
+            <h2>1. The Homeostatic Shift: From Consensus to Flow</h2>
+            <p>
+                Classical distributed systems operate under a dualistic dogma: state is a static value, and replicas must compete to agree on a single global sequence of updates. This consensus-centric paradigm requires centralized logical clocks, lock-step validation, and high overhead (e.g., Raft, Paxos, or proof-of-work). It treats concurrent mutations as a zero-sum conflict—one branch must "win" and the other must be discarded.
+            </p>
+            <p>
+                <strong>SHIVYA</strong> completely abandons consensus in favor of <strong>homeostasis</strong>.
+            </p>
+            <p>
+                Homeostasis is how biological organisms maintain stability. A cell does not wait for a global consensus protocol to update its chemical gradients; it allows local energy flows to propagate, automatically dissipating localized pressures and conflicts through geometric constraints.
+            </p>
+            <p>
+                In SHIVYA, state is modeled not as discrete numbers in a table, but as a continuous <strong>state potential</strong> defined on a directed simplicial complex:
+            </p>
+            <ul>
+                <li><strong>0-simplices (Vertices)</strong> represent local event mutations.</li>
+                <li><strong>1-simplices (Edges)</strong> represent directed causal transitions (flows).</li>
+                <li><strong>2-simplices (Triangles)</strong> represent concurrent, multi-dependency execution contexts.</li>
+            </ul>
+            <p>
+                Reconciliation is not a vote; it is a physical projection onto a geometric manifold.
+            </p>
+
+            <h2>2. The Hodge Decomposition of Causal Flow</h2>
+            <p>
+                To reconcile concurrent mutations, SHIVYA employs the <strong>Hodge Decomposition Theorem</strong> for graphs. Any discrete flow (1-cochain) \(\Delta S\) on a simplicial complex can be uniquely decomposed into three orthogonal components:
+            </p>
+
+            <div class="math-block">
+                \[\Delta S = d_0 \alpha + d_1^T \beta + \gamma\]
+            </div>
+
+            <p>where:</p>
+            <ul>
+                <li><strong>\(d_0 \alpha\) (Exact/Gradient Flow):</strong> The irrotational, conflict-free flow. This represents local, legitimate mutations that accumulate cleanly from the genesis state.</li>
+                <li><strong>\(d_1^T \beta\) (Coexact/Curl Flow):</strong> The rotational conflict component. This represents race conditions, double spends, or closed-loop cycles where concurrent updates contradict one another (such as the diamond topology).</li>
+                <li><strong>\(\gamma\) (Harmonic Flow):</strong> The divergence-free and curl-free component, representing global topological loops that cannot be contracted.</li>
+            </ul>
+
+            <h3>The Homeostatic Projection</h3>
+            <p>
+                When concurrent branches merge, the discrepancy appears as a non-zero curl (\(d_1 \Delta S \neq 0\)). The HodgeMesh engine isolates this curl by solving the coboundary Laplacian system:
+            </p>
+
+            <div class="math-block">
+                \[L_2 \beta = d_1 \Delta S \quad \text{where} \quad L_2 = d_1 d_1^T\]
+            </div>
+
+            <p>
+                Once the curl potential \(\beta\) is computed via our iterative Conjugate Gradient solver, the conflict is cleanly projected out:
+            </p>
+
+            <div class="math-block">
+                \[\Delta S_{\text{reconciled}} = \Delta S - d_1^T \beta\]
+            </div>
+
+            <p>
+                The resulting flow is guaranteed to be curl-free, allowing all nodes to integrate the remaining flow and converge to the identical state balance without exchanging sequence numbers or halting execution.
+            </p>
+
+            <h2>3. The Non-Dual Synthesis</h2>
+            <p>
+                Under the Non-Dual Substrate, conflict is not a bug; it is simply curvature. In a flat manifold (where events are purely sequential), there is no curvature, and therefore no conflict. When concurrent branches diverge, the manifold curves. The reconciler acts as a geometric tension-reliever, smoothing out the local curvature to restore flat, harmonic synchronicity.
+            </p>
+            <p>
+                By replacing the arbitrary time-ordering of consensus with the intrinsic geometry of causal flows, SHIVYA enables high-speed, local mutation at the edge, converging naturally whenever paths meet.
+            </p>
+        </section>
+
+        <footer>
+            SHIVYA Project &copy; 2026.
+        </footer>
+    </div>
+</body>
+</html>

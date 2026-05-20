@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHIVYA: The Non-Dual Substrate | Architecture</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Mermaid.js for rendering graph diagrams -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        :root {
+            --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --border-color: #E5E7EB;
+            --accent-color: #4F46E5;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+        }
+        header { margin-bottom: 2.5rem; }
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        p { margin-bottom: 1.25rem; color: var(--text-secondary); }
+        ul { margin-left: 1.5rem; margin-bottom: 1.25rem; color: var(--text-secondary); }
+        li { margin-bottom: 0.5rem; }
+        code {
+            background-color: var(--bg-color);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: var(--accent-color);
+        }
+        .mermaid-container {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            background: var(--bg-color);
+            margin: 2rem 0;
+            display: flex;
+            justify-content: center;
+        }
+        footer {
+            margin-top: 3rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a class="back-link" href="index.html">← Back to Home</a>
+        <header>
+            <h1>HodgeMesh Technical Architecture</h1>
+            <p>Component Specifications & Causal Topology</p>
+        </header>
+
+        <section>
+            <h2>Component Layout</h2>
+            <div class="mermaid-container">
+                <pre class="mermaid">
+graph TD
+    subgraph UserSpace [Simulation & User Interface]
+        Dashboard[Obs Dashboard HTML/JS]
+        Sim[Simulation Script]
+    end
+
+    subgraph LedgerSpace [State & Network Layer]
+        NodeA[HodgeNode A]
+        NodeB[HodgeNode B]
+        Server[SSE Telemetry Server]
+    end
+
+    subgraph GeometricSpace [Geometric Foundations]
+        SSC[SimplicialStateComplex]
+        Operators[DEC Operators: d0, d1, delta]
+        Reconciler[Geodesic Reconciler]
+        Solver[Conjugate Gradient Solver]
+    end
+
+    Sim --> NodeA
+    Sim --> NodeB
+    NodeA <-->|Sync Merge| NodeB
+    NodeA -->|Post Telemetry| Server
+    Server -->|SSE event-stream| Dashboard
+
+    NodeA & NodeB --> SSC
+    NodeA --> Reconciler
+    Reconciler --> Operators
+    Reconciler --> Solver
+                </pre>
+            </div>
+
+            <h2>1. SimplicialStateComplex (<code>complex.py</code>)</h2>
+            <p>Tracks causal event histories as a directed simplicial complex:</p>
+            <ul>
+                <li><strong>0-simplices (Vertices \(V\)):</strong> Events. Each vertex tracks its causal parents.</li>
+                <li><strong>1-simplices (Edges \(E\)):</strong> Directed transitions. If vertex \(u\) is a parent of \(v\), the edge is \((u, v)\).</li>
+                <li><strong>2-simplices (Triangles \(T\)):</strong> Formed automatically when a vertex has multiple parents that are themselves causally connected. This preserves the simplicial topology and represents concurrent branches.</li>
+            </ul>
+
+            <h2>2. DEC Operators (<code>operators.py</code>)</h2>
+            <p>Computes the linear operators on \(k\)-cochains:</p>
+            <ul>
+                <li><strong>Exterior Derivative \(d_0\) (Gradient):</strong> Maps 0-cochains (vertex potentials) to 1-cochains (edge flows).</li>
+                <li><strong>Exterior Derivative \(d_1\) (Curl):</strong> Maps 1-cochains (edge flows) to 2-cochains (triangle circulations).</li>
+                <li><strong>Codifferential \(\delta_1\) (Adjoint):</strong> Maps 1-cochains to 0-cochains. Implemented as the adjoint \(d_0^T\).</li>
+                <li><strong>Laplacian Operators:</strong>
+                    <ul>
+                        <li>\(L_0 = d_0^T d_0\) (Vertex Laplacian)</li>
+                        <li>\(L_2 = d_1 d_1^T\) (Triangle Laplacian)</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h2>3. Iterative CG Solver (<code>solver.py</code>)</h2>
+            <p>
+                A pure-standard-library Conjugate Gradient solver optimized for sparse symmetric positive semi-definite (SPSD) systems. It solves \(A x = b\) for Laplacians where \(A\) has a non-trivial null space, running to a convergence tolerance of \(10^{-6}\) squared residual norm.
+            </p>
+
+            <h2>4. Conflict Reconciler (<code>reconciler.py</code>)</h2>
+            <p>Performs the Hodge Decomposition:</p>
+            <ol>
+                <li>Computes the curl discrepancy vector \(b_2 = d_1 \Delta S\).</li>
+                <li>Solves the coexact system \(L_2 \beta = b_2\).</li>
+                <li>Computes the coexact conflict flow: \(S_{\text{coexact}} = d_1^T \beta\).</li>
+                <li>Reconciles the flow: \(\Delta S_{\text{reconciled}} = \Delta S - S_{\text{coexact}}\).</li>
+                <li>Integrates \(\Delta S_{\text{reconciled}}\) into vertex state potentials using a topological line integral starting from <code>genesis</code>.</li>
+            </ol>
+        </section>
+
+        <footer>
+            SHIVYA Project &copy; 2026.
+        </footer>
+    </div>
+</body>
+</html>

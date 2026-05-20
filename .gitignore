@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+.installed.cfg
+*.manifest
+*.spec
+
+# Virtual environments
+.venv/
+venv/
+env/
+.python-version
+
+# Test / type-check artefacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# GENESIS runtime state
+.shivya/
+*.log
+
+# Local scratch
+/tmp/
+scratch/
+*.tmp
+
+# Rust build artifacts
+target/
+

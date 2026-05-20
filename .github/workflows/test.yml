@@ -1,0 +1,43 @@
+name: tests
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+      - name: run test suite
+        run: |
+          python -m pytest tests/
+
+  pages-preview:
+    # Validate that the GH Pages build artefact stays syntactically intact.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: sanity-check static documentation assets
+        run: |
+          test -f docs/index.html
+          test -f docs/manifesto.html
+          test -f docs/philosophy.html
+          test -f docs/architecture.html
+          test -f docs/assets/hero.svg

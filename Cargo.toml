@@ -1,0 +1,25 @@
+[package]
+name = "shivya"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "A first-principles non-dual distributed computing substrate pairing discrete exterior calculus with hierarchical active inference."
+keywords = ["active-inference", "exterior-calculus", "distributed-systems", "wasm", "morphogenesis"]
+
+[workspace]
+resolver = "2"
+members = [
+    "crates/shivya-hodge",
+    "crates/shivya-flux",
+    "crates/telemetry_wasm",
+    "crates/shivya-morphic",
+    "crates/shivya-onsager",
+    "crates/shivya-turing"
+]
+
+[dependencies]
+shivya-hodge = { path = "crates/shivya-hodge" }
+shivya-flux = { path = "crates/shivya-flux" }
+shivya-morphic = { path = "crates/shivya-morphic" }
+shivya-onsager = { path = "crates/shivya-onsager" }
+shivya-turing = { path = "crates/shivya-turing" }

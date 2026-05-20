@@ -1,0 +1,13 @@
+[package]
+name = "shivya-turing"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "A first-principles non-dual distributed computing substrate pairing discrete exterior calculus with hierarchical active inference."
+keywords = ["active-inference", "exterior-calculus", "distributed-systems", "wasm", "morphogenesis"]
+
+[dependencies]
+shivya-hodge = { path = "../shivya-hodge" }
+shivya-flux = { path = "../shivya-flux" }
+shivya-morphic = { path = "../shivya-morphic" }
+shivya-onsager = { path = "../shivya-onsager" }

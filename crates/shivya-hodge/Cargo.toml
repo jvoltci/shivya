@@ -1,0 +1,10 @@
+[package]
+name = "shivya-hodge"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "A first-principles non-dual distributed computing substrate pairing discrete exterior calculus with hierarchical active inference."
+keywords = ["active-inference", "exterior-calculus", "distributed-systems", "wasm", "morphogenesis"]
+
+[dependencies]
+# Zero dependencies for Layer 0

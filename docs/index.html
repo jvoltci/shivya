@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHIVYA: The Non-Dual Substrate</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --border-color: #E5E7EB;
+            --accent-color: #4F46E5;
+            --success-color: #10B981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .banner-container {
+            width: 100%;
+            margin: 2rem 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            background: #F3F4F6;
+        }
+
+        .banner-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        section {
+            margin-bottom: 2.5rem;
+        }
+
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        p {
+            margin-bottom: 1.25rem;
+            color: var(--text-secondary);
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .link-card {
+            display: block;
+            text-decoration: none;
+            padding: 1.25rem;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            text-align: center;
+            color: var(--accent-color);
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            background: #F3F4F6;
+        }
+
+        code {
+            background-color: var(--bg-color);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: var(--accent-color);
+        }
+
+        pre {
+            background-color: #111827;
+            color: #10B981;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin-bottom: 1.5rem;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 3rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>SHIVYA</h1>
+            <p class="subtitle">The Non-Dual Substrate (NDS)</p>
+        </header>
+
+        <div class="banner-container">
+            <img src="assets/hero.svg" alt="SHIVYA HodgeMesh Causal Manifold">
+        </div>
+
+        <section id="philosophy">
+            <h2>The Philosophical Shift</h2>
+            <p>
+                SHIVYA completely abandons classical consensus models in distributed state networks. Instead of forcing replicas to agree on a global sequential sequence of events, SHIVYA models history as a continuous causal manifold and transactions as geometric flows.
+            </p>
+            <p>
+                By applying the <strong>Hodge Decomposition Theorem</strong> on graph simplicial complexes, we isolate local transaction updates (gradient flow) from circular double spends and race conditions (curl flow). Replicas sync and merge states homeostatically without a central coordinator.
+            </p>
+        </section>
+
+        <section id="documentation">
+            <h2>Documentation & Core Reading</h2>
+            <div class="links-grid">
+                <a class="link-card" href="manifesto.html">The Manifesto</a>
+                <a class="link-card" href="philosophy.html">Core Philosophy</a>
+                <a class="link-card" href="architecture.html">Technical Architecture</a>
+            </div>
+        </section>
+
+        <section id="quickstart">
+            <h2>Quickstart</h2>
+            <p>To run the live distributed ledger conflict simulation locally:</p>
+            <pre>PYTHONPATH=. python3 -u examples/01_mesh_simulation.py</pre>
+            <p>Then open the dashboard locally at <code>http://localhost:8000</code> or <code>http://localhost:8001</code> to view real-time state reconciliation.</p>
+        </section>
+
+        <footer>
+            SHIVYA Project &copy; 2026. Released under the MIT License.
+        </footer>
+    </div>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 [package]
 name = "shivya-telemetry"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "WASM telemetry bindings and 5-layer browser orchestrator for the Shivya consensus-free resource-sharing mesh."
@@ -12,10 +12,10 @@ documentation = "https://docs.rs/shivya-telemetry"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-shivya-hodge = { version = "0.2.0", path = "../shivya-hodge" }
-shivya-flux = { version = "0.2.0", path = "../shivya-flux" }
-shivya-morphic = { version = "0.2.0", path = "../shivya-morphic" }
-shivya-onsager = { version = "0.2.0", path = "../shivya-onsager" }
-shivya-turing = { version = "0.2.0", path = "../shivya-turing" }
+shivya-hodge = { version = "0.3.0", path = "../shivya-hodge" }
+shivya-flux = { version = "0.3.0", path = "../shivya-flux" }
+shivya-morphic = { version = "0.3.0", path = "../shivya-morphic" }
+shivya-onsager = { version = "0.3.0", path = "../shivya-onsager" }
+shivya-turing = { version = "0.3.0", path = "../shivya-turing" }
 wasm-bindgen = "0.2"
 getrandom = { version = "0.2", features = ["js"] }

@@ -733,7 +733,7 @@ dependencies = [
 
 [[package]]
 name = "shivya"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "shivya-flux",
  "shivya-hodge",
@@ -746,7 +746,7 @@ dependencies = [
 
 [[package]]
 name = "shivya-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "clap",
  "daemonize",
@@ -762,18 +762,18 @@ dependencies = [
 
 [[package]]
 name = "shivya-flux"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "shivya-hodge",
 ]
 
 [[package]]
 name = "shivya-hodge"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "shivya-morphic"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "shivya-flux",
  "shivya-hodge",
@@ -781,7 +781,7 @@ dependencies = [
 
 [[package]]
 name = "shivya-onsager"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "shivya-flux",
  "shivya-hodge",
@@ -790,7 +790,7 @@ dependencies = [
 
 [[package]]
 name = "shivya-p2p"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "serde",
  "shivya-hodge",
@@ -800,7 +800,7 @@ dependencies = [
 
 [[package]]
 name = "shivya-telemetry"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "getrandom",
  "shivya-flux",
@@ -813,7 +813,7 @@ dependencies = [
 
 [[package]]
 name = "shivya-turing"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "shivya-flux",
  "shivya-hodge",

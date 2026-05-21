@@ -1,18 +1,18 @@
 [package]
 name = "shivya-cli"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "High-performance native command-line daemon for the Shivya consensus-free resource-sharing mesh."
 
 [dependencies]
-shivya = { version = "0.2.0", path = "../../" }
+shivya = { version = "0.3.0", path = "../../" }
 tokio = { version = "1.0", features = ["full"] }
 clap = { version = "4.0", features = ["derive"] }
 sysinfo = "0.30"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-shivya-p2p = { version = "0.2.0", path = "../shivya-p2p" }
+shivya-p2p = { version = "0.3.0", path = "../shivya-p2p" }
 tokio-tungstenite = "0.20"
 futures-util = "0.3"
 

@@ -1,12 +1,12 @@
 [package]
 name = "shivya-p2p"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "High-performance decentralized P2P transport and Kademlia routing for the Shivya consensus-free resource-sharing mesh."
 
 [dependencies]
-shivya-hodge = { version = "0.2.0", path = "../shivya-hodge" }
-shivya-onsager = { version = "0.2.0", path = "../shivya-onsager" }
+shivya-hodge = { version = "0.3.0", path = "../shivya-hodge" }
+shivya-onsager = { version = "0.3.0", path = "../shivya-onsager" }
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }

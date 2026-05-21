@@ -1,6 +1,6 @@
 [package]
 name = "shivya-morphic"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Consensus-free distributed resource-sharing mesh for edge fleets, pairing discrete exterior calculus with hierarchical active inference."
@@ -10,5 +10,5 @@ repository = "https://github.com/jvoltci/shivya"
 documentation = "https://docs.rs/shivya-morphic"
 
 [dependencies]
-shivya-hodge = { version = "0.2.0", path = "../shivya-hodge" }
-shivya-flux = { version = "0.2.0", path = "../shivya-flux" }
+shivya-hodge = { version = "0.3.0", path = "../shivya-hodge" }
+shivya-flux = { version = "0.3.0", path = "../shivya-flux" }

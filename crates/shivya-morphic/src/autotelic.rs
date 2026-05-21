@@ -1,3 +1,64 @@
+use shivya_flux::{SubstrateError, RIDGE_EPSILON};
+
+/// Reports the most-recent inversion failure encountered by
+/// `dyn_mat_inv_stable`. Resets on every successful plain inversion. Exposed
+/// for diagnostics; the math path itself always returns a usable matrix.
+pub fn last_stabilization_event() -> Option<SubstrateError> {
+    LAST_STAB_EVENT.with(|cell| cell.borrow().clone())
+}
+
+thread_local! {
+    static LAST_STAB_EVENT: std::cell::RefCell<Option<SubstrateError>> =
+        std::cell::RefCell::new(None);
+}
+
+fn record_stab_event(evt: Option<SubstrateError>) {
+    LAST_STAB_EVENT.with(|cell| *cell.borrow_mut() = evt);
+}
+
+/// Inverts `matrix`, with a ridge-regularised fallback for singular inputs.
+///
+/// - Plain inversion first.
+/// - On singularity, adds `RIDGE_EPSILON` to the diagonal and retries.
+/// - If still singular, returns the identity (equivalent to "no information"
+///   on this update step) instead of panicking.
+///
+/// Each step's outcome is recorded in `last_stabilization_event()` so the
+/// daemon can surface degeneracy in telemetry without crashing.
+pub fn dyn_mat_inv_stable(matrix: &Vec<Vec<f64>>) -> Vec<Vec<f64>> {
+    let n = matrix.len();
+    match dyn_mat_inv(matrix) {
+        Ok(inv) => {
+            record_stab_event(None);
+            return inv;
+        }
+        Err(_) => {
+            record_stab_event(Some(SubstrateError::SingularMatrix {
+                size: n,
+                det: dyn_mat_det(matrix),
+            }));
+        }
+    }
+    // Ridge regularisation: M + epsilon * I breaks colinearity without
+    // meaningfully changing the well-conditioned subspace.
+    let mut stabilised = matrix.clone();
+    for i in 0..n {
+        stabilised[i][i] += RIDGE_EPSILON;
+    }
+    if let Ok(inv) = dyn_mat_inv(&stabilised) {
+        return inv;
+    }
+    record_stab_event(Some(SubstrateError::StabilizationFailed {
+        size: n,
+        ridge: RIDGE_EPSILON,
+    }));
+    let mut identity = vec![vec![0.0; n]; n];
+    for i in 0..n {
+        identity[i][i] = 1.0;
+    }
+    identity
+}
+
 // Dynamic matrix and vector helper functions
 pub fn dyn_mat_inv(matrix: &Vec<Vec<f64>>) -> Result<Vec<Vec<f64>>, String> {
     let n = matrix.len();
@@ -134,7 +195,7 @@ pub fn dyn_gaussian_kl(
     sigma2: &Vec<Vec<f64>>,
 ) -> f64 {
     let n = mu1.len();
-    let sigma2_inv = dyn_mat_inv(sigma2).unwrap();
+    let sigma2_inv = dyn_mat_inv_stable(sigma2);
 
     let prod = dyn_mat_mul_mat(&sigma2_inv, sigma1);
     let mut tr = 0.0;
@@ -149,7 +210,11 @@ pub fn dyn_gaussian_kl(
     let det1 = dyn_mat_det(sigma1);
     let det2 = dyn_mat_det(sigma2);
 
-    let log_det_ratio = (det2 / det1).ln();
+    let log_det_ratio = if det1 <= 0.0 || det2 <= 0.0 {
+        0.0
+    } else {
+        (det2 / det1).ln()
+    };
 
     0.5 * (tr + quadratic - (n as f64) + log_det_ratio)
 }
@@ -229,13 +294,13 @@ impl DynamicGibbsAgent {
 
     pub fn compute_optimal_sigma_q(&self, active: &[f64]) -> Vec<Vec<f64>> {
         let sigma_s = self.compute_sigma_s(active);
-        let sigma_s_inv = dyn_mat_inv(&sigma_s).unwrap();
+        let sigma_s_inv = dyn_mat_inv_stable(&sigma_s);
 
         let g_s_t = dyn_mat_transpose(&self.g_s);
         let temp = dyn_mat_mul_mat(&g_s_t, &sigma_s_inv);
         let precision_contrib = dyn_mat_mul_mat(&temp, &self.g_s);
 
-        let sigma_prior_inv = dyn_mat_inv(&self.sigma_prior).unwrap();
+        let sigma_prior_inv = dyn_mat_inv_stable(&self.sigma_prior);
 
         let mut total_precision = vec![vec![0.0; self.i_dim]; self.i_dim];
         for i in 0..self.i_dim {
@@ -244,14 +309,14 @@ impl DynamicGibbsAgent {
             }
         }
 
-        dyn_mat_inv(&total_precision).unwrap()
+        dyn_mat_inv_stable(&total_precision)
     }
 
     pub fn compute_free_energy(&self, s: &[f64], mu_q: &[f64], sigma_q: &Vec<Vec<f64>>) -> f64 {
         let kl = dyn_gaussian_kl(mu_q, sigma_q, &self.mu_prior, &self.sigma_prior);
 
         let sigma_s = self.compute_sigma_s(&self.active_state);
-        let sigma_s_inv = dyn_mat_inv(&sigma_s).unwrap();
+        let sigma_s_inv = dyn_mat_inv_stable(&sigma_s);
         let det_s = dyn_mat_det(&sigma_s);
 
         let pred_obs = dyn_mat_mul_vec(&self.g_s, mu_q);
@@ -270,7 +335,8 @@ impl DynamicGibbsAgent {
             }
         }
 
-        let nll = 0.5 * ((self.s_dim as f64) * (2.0 * std::f64::consts::PI).ln() + det_s.ln() + quad + trace_term);
+        let safe_det_s = if det_s > 0.0 { det_s } else { RIDGE_EPSILON };
+        let nll = 0.5 * ((self.s_dim as f64) * (2.0 * std::f64::consts::PI).ln() + safe_det_s.ln() + quad + trace_term);
         kl + nll
     }
 
@@ -278,9 +344,9 @@ impl DynamicGibbsAgent {
         self.sigma_q = self.compute_optimal_sigma_q(&self.active_state);
 
         let sigma_s = self.compute_sigma_s(&self.active_state);
-        let sigma_s_inv = dyn_mat_inv(&sigma_s).unwrap();
+        let sigma_s_inv = dyn_mat_inv_stable(&sigma_s);
         let g_s_t = dyn_mat_transpose(&self.g_s);
-        let sigma_prior_inv = dyn_mat_inv(&self.sigma_prior).unwrap();
+        let sigma_prior_inv = dyn_mat_inv_stable(&self.sigma_prior);
 
         let mut final_f = 0.0;
 

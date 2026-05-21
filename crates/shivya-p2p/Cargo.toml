@@ -3,7 +3,7 @@ name = "shivya-p2p"
 version = "0.2.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "High-performance decentralized P2P transport and Kademlia routing for the Shivya Non-Dual Substrate."
+description = "High-performance decentralized P2P transport and Kademlia routing for the Shivya consensus-free resource-sharing mesh."
 
 [dependencies]
 shivya-hodge = { version = "0.2.0", path = "../shivya-hodge" }

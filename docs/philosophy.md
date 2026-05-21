@@ -1,52 +1,77 @@
-# SHIVYA: The Non-Dual Substrate (NDS)
+# Shivya: Design Philosophy
 
-> *"Truth is not a static global variable; it is a harmonic flow traversing a causal manifold."*
+## 1. From global consensus to local flow reconciliation
 
----
+Classical distributed systems treat state as a single shared variable and require replicas to agree on a global sequence of updates to that variable. That model fits applications where linearizable history is the load-bearing requirement: ledgers, transactional databases, kernel-style coordination services. The price is real — extra round trips, leader-failover machinery, the operational surface area of running Paxos/Raft at scale.
 
-## 1. The Homeostatic Shift: From Consensus to Flow
+Many edge-resource problems do not need linearizable history. They need *eventually identical state* across nodes that are independently adjusting to local pressure (queue length, CPU load, bandwidth headroom). For that class of problem, the *flow* between nodes is the natural primitive, not the *value* sitting at any individual node.
 
-Classical distributed systems operate under a dualistic dogma: state is a static value, and replicas must compete to agree on a single global sequence of updates. This consensus-centric paradigm requires centralized logical clocks, lock-step validation, and high overhead (e.g., Raft, Paxos, or proof-of-work). It treats concurrent mutations as a zero-sum conflict—one branch must "win" and the other must be discarded.
+Shivya is built for that class. It is a **consensus-free localized resource balancer**: each edge can keep mutating its local state, and when partitions heal, a Hodge curl-projector cancels the rotational disagreement that concurrent operations introduced. This is not equivalent to Paxos or Raft, and it does not provide linearizable global ordering. See [CITATIONS.md](../CITATIONS.md) for the underlying theorems and the workloads this regime suits.
 
-**SHIVYA** takes a different path: rather than competing for total order, the substrate behaves as a **consensus-free localized resource balancer** that lets local edge-state deltas accumulate independently and then projects out the curl component when partitions heal. This is not equivalent to Paxos/Raft and does not provide linearizable global ordering; see [CITATIONS.md](../CITATIONS.md) for the underlying decomposition theorem and a discussion of which workloads this regime suits.
+State is modelled as a *state potential* defined on a directed simplicial complex:
 
-Homeostasis is how biological organisms maintain stability. A cell does not wait for a global consensus protocol to update its chemical gradients; it allows local energy flows to propagate, automatically dissipating localized pressures and conflicts through geometric constraints. 
+- **0-simplices (vertices):** local state mass at a node.
+- **1-simplices (edges):** directed flow between two nodes.
+- **2-simplices (triangles):** concurrent-context boundaries, capable of carrying rotational tension.
 
-In SHIVYA, state is modeled not as discrete numbers in a table, but as a continuous **state potential** defined on a directed simplicial complex:
-- **0-simplices (Vertices)** represent local event mutations.
-- **1-simplices (Edges)** represent directed causal transitions (flows).
-- **2-simplices (Triangles)** represent concurrent, multi-dependency execution contexts.
-
-Reconciliation is not a vote; it is a physical projection onto a geometric manifold.
+Reconciliation is not a vote. It is a linear-algebra projection onto the curl-free subspace.
 
 ---
 
-## 2. The Hodge Decomposition of Causal Flow
+## 2. The Hodge decomposition of causal flow
 
-To reconcile concurrent mutations, SHIVYA employs the **Hodge Decomposition Theorem** for graphs. Any discrete flow (1-cochain) $\Delta S$ on a simplicial complex can be uniquely decomposed into three orthogonal components:
+Any discrete 1-chain `ΔS` on a simplicial complex decomposes uniquely into three orthogonal components:
 
 $$\Delta S = d_0 \alpha + d_1^T \beta + \gamma$$
 
-where:
-1. **$d_0 \alpha$ (Exact/Gradient Flow):** The irrotational, conflict-free flow. This represents local, legitimate mutations that accumulate cleanly from the genesis state.
-2. **$d_1^T \beta$ (Coexact/Curl Flow):** The rotational conflict component. This represents race conditions, double spends, or closed-loop cycles where concurrent updates contradict one another (such as the diamond topology).
-3. **$\gamma$ (Harmonic Flow):** The divergence-free and curl-free component, representing global topological loops that cannot be contracted (non-trivial homology cycles).
+1. **`d_0 α` (exact / gradient):** the irrotational, conflict-free component. Represents local mutations that accumulate cleanly across the complex.
+2. **`d_1^T β` (coexact / curl):** the rotational component. Represents race conditions and concurrent contradictions — closed-loop cycles where competing updates disagree (the classic diamond topology).
+3. **`γ` (harmonic):** divergence-free *and* curl-free. Represents non-trivial topological loops (non-contractible homology cycles).
 
-### The Homeostatic Projection
-When concurrent branches merge, the discrepancy appears as a non-zero curl ($d_1 \Delta S \neq 0$). The HodgeMesh engine isolates this curl by solving the coboundary Laplacian system:
+### The reconciliation step
+
+When concurrent branches merge, the disagreement appears as non-zero curl: `d₁ ΔS ≠ 0`. The reconciler isolates this component by solving the coboundary Laplacian system:
 
 $$L_2 \beta = d_1 \Delta S \quad \text{where} \quad L_2 = d_1 d_1^T$$
 
-Once the curl potential $\beta$ is computed via our iterative Conjugate Gradient solver, the conflict is cleanly projected out:
+A stack-allocated Conjugate Gradient solver (`crates/shivya-hodge/src/solver.rs`, tolerance 1e-8) converges on `β`. The curl component is then projected out:
 
-$$\Delta S_{reconciled} = \Delta S - d_1^T \beta$$
+$$\Delta S_{\text{reconciled}} = \Delta S - d_1^T \beta$$
 
-The resulting flow is guaranteed to be curl-free, allowing all nodes to integrate the remaining flow and converge to the identical state balance without exchanging sequence numbers or halting execution.
+The remaining flow is curl-free. Every node observing the same complex reaches the same `ΔS_reconciled`, with no sequence numbers exchanged. The projector is idempotent — running it twice gives the same result as running it once.
+
+This is what the Layer-0 integration test (`tests/jepsen_partitions.rs`) asserts. After a programmatic partition splits a 5-node bowtie complex and conflicting flows are injected on each side, the post-heal reconciled flow's curl norm is below 1e-7 — and a second projection introduces no further drift.
 
 ---
 
-## 3. The Non-Dual Synthesis
+## 3. What the upper layers add
 
-Under the Non-Dual Substrate, conflict is not a bug; it is simply curvature. In a flat manifold (where events are purely sequential), there is no curvature, and therefore no conflict. When concurrent branches diverge, the manifold curves. The reconciler acts as a geometric tension-reliever, smoothing out the local curvature to restore flat, harmonic synchronicity.
+The Hodge projector is the floor, not the ceiling. The upper layers are what make this system useful for actual workloads:
 
-By replacing the arbitrary time-ordering of consensus with the intrinsic geometry of causal flows, SHIVYA enables high-speed, local mutation at the edge, converging naturally whenever paths meet.
+- **Layer 1 (active inference)** lets each node maintain an explicit posterior over its observations. When telemetry collapses (e.g., singular covariance during sustained colinear load), the math path falls back to ridge regularisation (1e-6) and ultimately identity-matrix inversion. No `panic!` on the main path.
+
+- **Layer 2 (self-optimising register core)** is a real bytecode VM with a 500-cycle budget, plus a generative model that can grow its own latent dimension at runtime. The "metamorphic" component is genetic programming with a free-energy fitness — useful, but labelled honestly.
+
+- **Layer 3 (Onsager ensemble)** couples nodes with a symmetric flow matrix `L_ij = L_ji` and computes Harsanyi dividends over local coalitions (Möbius recursion over neighbourhood subsets). The collective free-energy functional rewards synergistic configurations.
+
+- **Layer 4 (reaction-diffusion topology)** runs RK4-integrated Gierer-Meinhardt kinetics over the node graph, with an explicit CFL bound. Hot-spot activator peaks trigger pre-allocated mitosis; underutilised nodes get culled (with a ≥ 3-node integrity floor).
+
+None of these layers require a global clock. None of them require an authoritative leader. All of them survive the chaos test (`tests/chaos_ensemble.rs`): 7 nodes, 15% UDP packet loss, random per-node isolation, plus a hard programmatic partition layered on top, with the assertion that collective free energy still trends down.
+
+---
+
+## 4. Where this fits
+
+Use Shivya when:
+
+- Your fleet is **edge-shaped**: many nodes, intermittent connectivity, no central coordinator.
+- The workload is **flow-shaped**: load to balance, work to offload, resources to diffuse — not transactions to serialise.
+- "Eventually identical" is acceptable. Most monitoring, telemetry-driven scheduling, and resource-rebalancing problems satisfy this.
+
+Don't use Shivya when:
+
+- You need **linearizable per-key reads**.
+- You need an **authoritative transaction log** with strict commit semantics.
+- You need **bounded staleness guarantees**. Shivya's convergence is asymptotic, not bounded-time.
+
+Pick the right tool. Consensus is the right tool for many problems. Shivya is the right tool for some of the problems that consensus is overkill for.

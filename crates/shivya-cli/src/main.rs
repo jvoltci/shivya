@@ -1,3 +1,5 @@
+#[allow(dead_code)] // public API exposed to embedders even though main.rs doesn't drive it directly
+mod bridge;
 mod telemetry;
 mod orchestrator;
 

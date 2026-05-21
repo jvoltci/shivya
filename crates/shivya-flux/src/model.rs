@@ -1,19 +1,80 @@
 use crate::blanket::MarkovBlanket;
 
+/// Smallest stabilising ridge added to a singular covariance / precision
+/// matrix before retrying the inversion. Picked at 1e-6 because the math
+/// crates operate on float telemetry with typical condition numbers well
+/// below 1e6, so a 1-ppm shift is below measurement noise but well above
+/// IEEE-754 round-off.
+pub const RIDGE_EPSILON: f64 = 1e-6;
+
+/// Singular matrices and other recoverable math failures bubble up via this
+/// enum instead of `panic!`. The runtime layers (orchestrator, ensemble,
+/// daemon) treat every variant as a soft signal to retry with regularised
+/// inputs, so a degenerate telemetry sample never kills the daemon process.
+#[derive(Debug, Clone)]
+pub enum SubstrateError {
+    /// Covariance / precision matrix was singular at the listed size.
+    /// `det` is the determinant at the point of failure.
+    SingularMatrix { size: usize, det: f64 },
+    /// Even after a ridge of `ridge` the matrix remained ill-conditioned;
+    /// the math path fell back to the identity (= maximum-entropy prior).
+    StabilizationFailed { size: usize, ridge: f64 },
+    /// Combining vectors/matrices with mismatched extents.
+    DimensionMismatch { expected: usize, actual: usize },
+}
+
+impl std::fmt::Display for SubstrateError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SubstrateError::SingularMatrix { size, det } => {
+                write!(f, "singular {0}x{0} matrix (det={1:.3e})", size, det)
+            }
+            SubstrateError::StabilizationFailed { size, ridge } => {
+                write!(f, "ridge {0:.1e} insufficient to stabilise {1}x{1} matrix", ridge, size)
+            }
+            SubstrateError::DimensionMismatch { expected, actual } => {
+                write!(f, "dimension mismatch: expected {}, got {}", expected, actual)
+            }
+        }
+    }
+}
+
+impl std::error::Error for SubstrateError {}
+
 pub trait MatrixMath<const N: usize> {
     fn det(&self) -> f64;
+    /// Returns a stabilised inverse: tries the plain inversion first, on
+    /// singularity adds `RIDGE_EPSILON` to the diagonal and retries, and
+    /// only as a last resort returns the identity matrix. Never panics.
     fn inv(&self) -> [[f64; N]; N];
+    /// Variant of `inv` that reports the failure rather than masking it.
+    /// Callers can use this to log telemetry health without changing the
+    /// numerical behaviour, which still goes through ridge regularisation.
+    fn try_inv(&self) -> Result<[[f64; N]; N], SubstrateError>;
+}
+
+fn identity_1x1() -> [[f64; 1]; 1] { [[1.0]] }
+fn identity_2x2() -> [[f64; 2]; 2] { [[1.0, 0.0], [0.0, 1.0]] }
+fn identity_3x3() -> [[f64; 3]; 3] {
+    [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
 }
 
 impl MatrixMath<1> for [[f64; 1]; 1] {
     fn det(&self) -> f64 {
         self[0][0]
     }
-    fn inv(&self) -> [[f64; 1]; 1] {
+    fn try_inv(&self) -> Result<[[f64; 1]; 1], SubstrateError> {
         if self[0][0].abs() < 1e-15 {
-            panic!("Singular 1x1 matrix");
+            return Err(SubstrateError::SingularMatrix { size: 1, det: self[0][0] });
         }
-        [[1.0 / self[0][0]]]
+        Ok([[1.0 / self[0][0]]])
+    }
+    fn inv(&self) -> [[f64; 1]; 1] {
+        if let Ok(m) = self.try_inv() {
+            return m;
+        }
+        let stabilised = [[self[0][0] + RIDGE_EPSILON]];
+        stabilised.try_inv().unwrap_or_else(|_| identity_1x1())
     }
 }
 
@@ -21,15 +82,24 @@ impl MatrixMath<2> for [[f64; 2]; 2] {
     fn det(&self) -> f64 {
         self[0][0] * self[1][1] - self[0][1] * self[1][0]
     }
-    fn inv(&self) -> [[f64; 2]; 2] {
+    fn try_inv(&self) -> Result<[[f64; 2]; 2], SubstrateError> {
         let d = self.det();
         if d.abs() < 1e-15 {
-            panic!("Singular 2x2 matrix");
+            return Err(SubstrateError::SingularMatrix { size: 2, det: d });
         }
-        [
+        Ok([
             [self[1][1] / d, -self[0][1] / d],
             [-self[1][0] / d, self[0][0] / d],
-        ]
+        ])
+    }
+    fn inv(&self) -> [[f64; 2]; 2] {
+        if let Ok(m) = self.try_inv() {
+            return m;
+        }
+        let mut stab = *self;
+        stab[0][0] += RIDGE_EPSILON;
+        stab[1][1] += RIDGE_EPSILON;
+        stab.try_inv().unwrap_or_else(|_| identity_2x2())
     }
 }
 
@@ -39,10 +109,10 @@ impl MatrixMath<3> for [[f64; 3]; 3] {
             - self[0][1] * (self[1][0] * self[2][2] - self[1][2] * self[2][0])
             + self[0][2] * (self[1][0] * self[2][1] - self[1][1] * self[2][0])
     }
-    fn inv(&self) -> [[f64; 3]; 3] {
+    fn try_inv(&self) -> Result<[[f64; 3]; 3], SubstrateError> {
         let d = self.det();
         if d.abs() < 1e-15 {
-            panic!("Singular 3x3 matrix");
+            return Err(SubstrateError::SingularMatrix { size: 3, det: d });
         }
         let c00 = self[1][1] * self[2][2] - self[1][2] * self[2][1];
         let c01 = -(self[1][0] * self[2][2] - self[1][2] * self[2][0]);
@@ -56,11 +126,21 @@ impl MatrixMath<3> for [[f64; 3]; 3] {
         let c21 = -(self[0][0] * self[1][2] - self[0][2] * self[1][0]);
         let c22 = self[0][0] * self[1][1] - self[0][1] * self[1][0];
 
-        [
+        Ok([
             [c00 / d, c10 / d, c20 / d],
             [c01 / d, c11 / d, c21 / d],
             [c02 / d, c12 / d, c22 / d],
-        ]
+        ])
+    }
+    fn inv(&self) -> [[f64; 3]; 3] {
+        if let Ok(m) = self.try_inv() {
+            return m;
+        }
+        let mut stab = *self;
+        stab[0][0] += RIDGE_EPSILON;
+        stab[1][1] += RIDGE_EPSILON;
+        stab[2][2] += RIDGE_EPSILON;
+        stab.try_inv().unwrap_or_else(|_| identity_3x3())
     }
 }
 
@@ -162,7 +242,15 @@ where
     let det1 = sigma1.det();
     let det2 = sigma2.det();
 
-    let log_det_ratio = (det2 / det1).ln();
+    // Either operand can fall to (or below) zero after ridge stabilisation of
+    // a singular covariance. The log-determinant ratio is undefined in those
+    // cases; we substitute zero (≡ assume equal volumes) so callers see a
+    // finite, conservative KL instead of NaN/-inf bleeding into free energy.
+    let log_det_ratio = if det1 <= 0.0 || det2 <= 0.0 {
+        0.0
+    } else {
+        (det2 / det1).ln()
+    };
 
     0.5 * (tr + quadratic - (N as f64) + log_det_ratio)
 }
@@ -280,7 +368,8 @@ where
             }
         }
 
-        let nll = 0.5 * ((S_DIM as f64) * (2.0 * std::f64::consts::PI).ln() + det_s.ln() + quad + trace_term);
+        let safe_det_s = if det_s > 0.0 { det_s } else { RIDGE_EPSILON };
+        let nll = 0.5 * ((S_DIM as f64) * (2.0 * std::f64::consts::PI).ln() + safe_det_s.ln() + quad + trace_term);
         kl + nll
     }
 

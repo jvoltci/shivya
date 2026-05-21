@@ -75,7 +75,7 @@
     <path d="M 100,0 L 100,450 M 200,0 L 200,450 M 300,0 L 300,450 M 400,0 L 400,450 M 500,0 L 500,450 M 600,0 L 600,450 M 700,0 L 700,450 M 800,0 L 800,450 M 900,0 L 900,450" stroke="#FFFFFF" stroke-width="1" />
   </g>
 
-  <!-- Non-Dual Causal Flow Ring (Underlay) -->
+  <!-- Causal Flow Ring (Underlay) -->
   <circle cx="500" cy="225" r="140" fill="none" stroke="rgba(255, 255, 255, 0.03)" stroke-width="2" />
   <circle cx="500" cy="225" r="140" fill="none" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="10 30" opacity="0.6">
     <animateTransform attributeName="transform" type="rotate" from="0 500 225" to="360 500 225" dur="40s" repeatCount="indefinite" />
@@ -158,16 +158,16 @@
 
   <!-- Phase 11 P2P Annotation -->
   <text x="180" y="80" text-anchor="end" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#14B8A6" letter-spacing="0.05em">P2P KADEMLIA TRANSPORT</text>
-  <text x="180" y="93" text-anchor="end" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">shivya-p2p (Thermodynamic UDP)</text>
+  <text x="180" y="93" text-anchor="end" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">shivya-p2p (Big-Endian UDP)</text>
 
   <!-- Phase 12 WebSocket Annotation -->
   <text x="820" y="80" text-anchor="start" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#F43F5E" letter-spacing="0.05em">WEBOS VISUALIZER BRIDGE</text>
   <text x="820" y="93" text-anchor="start" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">ws://127.0.0.1:9002 (Non-Blocking)</text>
 
-  <!-- Non-Dual Mathematical Centerpiece -->
+  <!-- Hodge Decomposition Centerpiece -->
   <rect x="390" y="200" width="220" height="50" rx="8" fill="rgba(15, 23, 42, 0.85)" stroke="#1E293B" stroke-width="1.5" />
   <text x="500" y="222" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#38BDF8">ΔS = d*p + δ*q</text>
-  <text x="500" y="238" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#64748B">Non-Dual Hodge Decomposition</text>
+  <text x="500" y="238" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#64748B">Hodge Decomposition (curl-projection reconciler)</text>
 
   <!-- Ambient Philosophy Quote -->
   <text x="500" y="420" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="13" font-style="italic" fill="#94A3B8">

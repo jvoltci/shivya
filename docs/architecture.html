@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHIVYA: The Non-Dual Substrate | Architecture</title>
+    <title>Shivya: Consensus-Free Distributed Resource-Sharing Mesh | Architecture</title>
     <!-- Modern Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -150,7 +150,7 @@ graph TD
     CLI["shivya-cli (Tokio & UDS)"]:::run
     WS["WebSocket Server (Port 9002)"]:::run
     P2P["shivya-p2p (Kademlia & UDP)"]:::net
-    UDP["Thermodynamic UDP Port"]:::net
+    UDP["UDP Socket (Big-Endian Framed)"]:::net
 
     L4["Layer 4: shivya-turing (Morphogenesis)"]:::core
     L3["Layer 3: shivya-onsager (Thermodynamics)"]:::core
@@ -187,7 +187,7 @@ graph TD
                 Steps physical nodes as Active Inference agents. Agents maintain internal beliefs (\(\mu\)) and adapt to environmental fluctuations by minimizing Variational Free Energy (\(F\)) over sensory streams (\(s\)) via local continuous gradients.
             </p>
 
-            <h3>Layer 2: Autotelic Morphic Core (<code>crates/shivya-morphic</code>)</h3>
+            <h3>Layer 2: Self-Optimizing Register Core (<code>crates/shivya-morphic</code>)</h3>
             <p>
                 Evaluates state transition logic inside a stack-allocated Register VM with cycle budgets. If moving average free energy breaches novelty limits, the VM hot-swaps its instruction stream and expands its active state dimensions.
             </p>
@@ -209,7 +209,7 @@ graph TD
             <ul>
                 <li><strong>Kademlia XOR Routing Table:</strong> Nodes maintain stack-allocated routing tables ($K=4$) keyed by XOR distance (\(d(x,y) = x \oplus y\)).</li>
                 <li><strong>LRU Eviction Guard:</strong> Full buckets trigger asynchronous UDP pings to detect stale addresses, preserving network topological health.</li>
-                <li><strong>Thermodynamic UDP Wire Protocol:</strong> Zero-heap, Big-Endian float packet serialization to transfer simplicial splits and parameter variations seamlessly across diverse CPU architectures.</li>
+                <li><strong>Fixed-Layout UDP Wire Protocol:</strong> Zero-heap, big-endian float serialization for transferring simplicial deltas and parameter migrations consistently across heterogeneous CPU architectures.</li>
             </ul>
 
             <h2>4. Native Edge Daemon & Visualizer Bridge (<code>crates/shivya-cli</code>)</h2>

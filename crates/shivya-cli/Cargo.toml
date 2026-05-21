@@ -3,7 +3,7 @@ name = "shivya-cli"
 version = "0.2.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "High-performance native command-line daemon for the Shivya Non-Dual Substrate."
+description = "High-performance native command-line daemon for the Shivya consensus-free resource-sharing mesh."
 
 [dependencies]
 shivya = { version = "0.2.0", path = "../../" }

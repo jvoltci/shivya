@@ -1,6 +1,6 @@
 [package]
 name = "shivya-turing"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "A first-principles non-dual distributed computing substrate pairing discrete exterior calculus with hierarchical active inference."
@@ -10,7 +10,7 @@ repository = "https://github.com/jvoltci/shivya"
 documentation = "https://docs.rs/shivya-turing"
 
 [dependencies]
-shivya-hodge = { version = "0.1.0", path = "../shivya-hodge" }
-shivya-flux = { version = "0.1.0", path = "../shivya-flux" }
-shivya-morphic = { version = "0.1.0", path = "../shivya-morphic" }
-shivya-onsager = { version = "0.1.0", path = "../shivya-onsager" }
+shivya-hodge = { version = "0.2.0", path = "../shivya-hodge" }
+shivya-flux = { version = "0.2.0", path = "../shivya-flux" }
+shivya-morphic = { version = "0.2.0", path = "../shivya-morphic" }
+shivya-onsager = { version = "0.2.0", path = "../shivya-onsager" }

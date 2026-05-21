@@ -1,16 +1,16 @@
 [package]
 name = "telemetry_wasm"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-shivya-hodge = { version = "0.1.0", path = "../shivya-hodge" }
-shivya-flux = { version = "0.1.0", path = "../shivya-flux" }
-shivya-morphic = { version = "0.1.0", path = "../shivya-morphic" }
-shivya-onsager = { version = "0.1.0", path = "../shivya-onsager" }
-shivya-turing = { version = "0.1.0", path = "../shivya-turing" }
+shivya-hodge = { version = "0.2.0", path = "../shivya-hodge" }
+shivya-flux = { version = "0.2.0", path = "../shivya-flux" }
+shivya-morphic = { version = "0.2.0", path = "../shivya-morphic" }
+shivya-onsager = { version = "0.2.0", path = "../shivya-onsager" }
+shivya-turing = { version = "0.2.0", path = "../shivya-turing" }
 wasm-bindgen = "0.2"
 getrandom = { version = "0.2", features = ["js"] }

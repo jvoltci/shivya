@@ -1,6 +1,6 @@
 [package]
 name = "shivya"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "A first-principles non-dual distributed computing substrate pairing discrete exterior calculus with hierarchical active inference."
@@ -23,12 +23,12 @@ members = [
 ]
 
 [dependencies]
-shivya-hodge = { version = "0.1.0", path = "crates/shivya-hodge" }
-shivya-flux = { version = "0.1.0", path = "crates/shivya-flux" }
-shivya-morphic = { version = "0.1.0", path = "crates/shivya-morphic" }
-shivya-onsager = { version = "0.1.0", path = "crates/shivya-onsager" }
-shivya-turing = { version = "0.1.0", path = "crates/shivya-turing" }
+shivya-hodge = { version = "0.2.0", path = "crates/shivya-hodge" }
+shivya-flux = { version = "0.2.0", path = "crates/shivya-flux" }
+shivya-morphic = { version = "0.2.0", path = "crates/shivya-morphic" }
+shivya-onsager = { version = "0.2.0", path = "crates/shivya-onsager" }
+shivya-turing = { version = "0.2.0", path = "crates/shivya-turing" }
 
 [dev-dependencies]
-shivya-p2p = { version = "0.1.0", path = "crates/shivya-p2p" }
+shivya-p2p = { version = "0.2.0", path = "crates/shivya-p2p" }
 tokio = { version = "1.0", features = ["full"] }

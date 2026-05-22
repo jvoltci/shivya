@@ -3,7 +3,7 @@ name = "shivya-onsager"
 version = "0.4.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "Consensus-free distributed resource-sharing mesh for edge fleets, pairing discrete exterior calculus with hierarchical active inference."
+description = "Layer 3 of Shivya: multi-agent active-inference ensemble with a symmetric Onsager flow matrix (L_ij = L_ji) and Harsanyi-dividend collective free energy."
 keywords = ["active-inference", "exterior-calculus", "distributed-systems", "wasm", "morphogenesis"]
 homepage = "https://github.com/jvoltci/shivya"
 repository = "https://github.com/jvoltci/shivya"

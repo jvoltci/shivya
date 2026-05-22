@@ -281,7 +281,7 @@ impl NativeOrchestrator {
                     let scaled_dist = 1.0 - (lead_zeros as f64 / 160.0);
                     
                     self.complex.add_vertex(&peer_label, 1.0);
-                    let _ = self.complex.add_edge("Node0", &peer_label, scaled_dist);
+                    self.complex.add_edge("Node0", &peer_label, scaled_dist);
                 }
             }
         }
@@ -329,9 +329,7 @@ impl NativeOrchestrator {
         // 4. Reconcile topological states (Layer 0)
         let mut delta_s = vec![0.0; self.complex.edges.len()];
         // Fill delta_s with tiny perturbation from CPU stress
-        for i in 0..delta_s.len() {
-            delta_s[i] = obs_val * 0.1;
-        }
+        delta_s.fill(obs_val * 0.1);
         let reconciled = reconcile_state_delta(&self.complex, &delta_s);
         let curl_deviation: f64 = reconciled.iter().zip(delta_s.iter())
             .map(|(&r, &d)| (r - d).powi(2))

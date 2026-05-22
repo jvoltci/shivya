@@ -11,3 +11,6 @@ documentation = "https://docs.rs/shivya-hodge"
 
 [dependencies]
 # Zero dependencies for Layer 0
+
+[lints]
+workspace = true

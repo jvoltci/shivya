@@ -14,3 +14,6 @@ blake3 = "1.5"
 
 [dev-dependencies]
 shivya-flux = { version = "0.4.0", path = "../shivya-flux" }
+
+[lints]
+workspace = true

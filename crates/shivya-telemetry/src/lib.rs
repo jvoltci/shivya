@@ -41,6 +41,12 @@ pub struct ShivyaSimulation {
     agent: GibbsFluxAgent<2, 1, 2>,
 }
 
+impl Default for ShivyaSimulation {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[wasm_bindgen]
 impl ShivyaSimulation {
     #[wasm_bindgen(constructor)]
@@ -136,6 +142,12 @@ pub struct SubstrateOrchestrator {
     apoptosis: ApoptosisEngine,
     step_count: usize,
     mind: MindCore,
+}
+
+impl Default for SubstrateOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[wasm_bindgen]
@@ -403,7 +415,7 @@ impl SubstrateOrchestrator {
             let child_label = format!("Node{}", child);
             self.complex.add_vertex(&child_label, 1.0);
             let parent_label = format!("Node{}", parent);
-            let _ = self.complex.add_edge(&parent_label, &child_label, 1.0);
+            self.complex.add_edge(&parent_label, &child_label, 1.0);
             hotswap_status[child] = true; // Mark as newly hotswapped/split
         }
 
@@ -477,7 +489,7 @@ impl SubstrateOrchestrator {
 
             json.push_str("    {\n");
             json.push_str(&format!("      \"id\": {},\n", idx));
-            json.push_str(&format!("      \"active\": true,\n"));
+            json.push_str("      \"active\": true,\n");
             json.push_str(&format!("      \"free_energy\": {:.6},\n", agent.f_history.last().cloned().unwrap_or(0.0)));
             json.push_str(&format!("      \"belief_dim\": {},\n", agent.i_dim));
             json.push_str(&format!("      \"beliefs\": [{}],\n", beliefs_str));
@@ -494,7 +506,7 @@ impl SubstrateOrchestrator {
             }
         }
         json.push_str("  ]\n");
-        json.push_str("}");
+        json.push('}');
 
         json
     }

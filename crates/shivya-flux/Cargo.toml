@@ -16,3 +16,6 @@ shivya-mind = { version = "0.4.0", path = "../shivya-mind" }
 [[bench]]
 name = "convergence_vs_gossip"
 harness = false
+
+[lints]
+workspace = true

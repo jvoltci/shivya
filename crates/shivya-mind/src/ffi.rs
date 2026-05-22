@@ -43,8 +43,14 @@ const TAIL_BYTES: usize = PACKED_LEN - FULL_U64_CHUNKS * 8;
 /// The handle is, internally, `Box<Arc<Codebook>>` cast to `*mut Codebook`
 /// so that multiple `Memory` instances can share one codebook without
 /// disturbing the C-visible pointer identity.
+/// # Safety
+///
+/// If `salt_ptr` is non-null, the caller must guarantee that
+/// `salt_ptr[..salt_len]` is a readable slice of initialised bytes for
+/// the duration of the call. Passing `(null, _)` or `(_, 0)` is always
+/// safe and selects the engine default salt.
 #[no_mangle]
-pub extern "C" fn sm_codebook_new(salt_ptr: *const u8, salt_len: usize) -> *mut Codebook {
+pub unsafe extern "C" fn sm_codebook_new(salt_ptr: *const u8, salt_len: usize) -> *mut Codebook {
     catch_unwind(AssertUnwindSafe(|| {
         let salt: &[u8] = if salt_ptr.is_null() || salt_len == 0 {
             DEFAULT_SALT
@@ -60,8 +66,13 @@ pub extern "C" fn sm_codebook_new(salt_ptr: *const u8, salt_len: usize) -> *mut 
 /// Release a codebook handle previously produced by [`sm_codebook_new`].
 /// Null input is a no-op. Memories created from this codebook keep their
 /// own `Arc` clone and continue to function until they are freed too.
+/// # Safety
+///
+/// `cb` must either be null or a handle previously returned by
+/// [`sm_codebook_new`] that has not yet been freed. Each handle must be
+/// passed to this function at most once.
 #[no_mangle]
-pub extern "C" fn sm_codebook_free(cb: *mut Codebook) {
+pub unsafe extern "C" fn sm_codebook_free(cb: *mut Codebook) {
     if cb.is_null() {
         return;
     }
@@ -74,8 +85,13 @@ pub extern "C" fn sm_codebook_free(cb: *mut Codebook) {
 /// The codebook's reference count is bumped; the codebook handle remains
 /// owned by the caller and must still be released with
 /// [`sm_codebook_free`]. Returns null on a null input or panic.
+/// # Safety
+///
+/// `cb` must either be null or a live handle previously returned by
+/// [`sm_codebook_new`]. The codebook handle is borrowed immutably; the
+/// caller retains ownership and must still free it independently.
 #[no_mangle]
-pub extern "C" fn sm_memory_new(cb: *mut Codebook) -> *mut Memory {
+pub unsafe extern "C" fn sm_memory_new(cb: *mut Codebook) -> *mut Memory {
     catch_unwind(AssertUnwindSafe(|| {
         let handle = cb.cast::<Arc<Codebook>>();
         if let Some(arc) = unsafe { handle.as_ref() } {
@@ -90,8 +106,13 @@ pub extern "C" fn sm_memory_new(cb: *mut Codebook) -> *mut Memory {
 
 /// Release a memory handle previously produced by [`sm_memory_new`].
 /// Null input is a no-op. The bound codebook is unaffected.
+/// # Safety
+///
+/// `mem` must either be null or a handle previously returned by
+/// [`sm_memory_new`] that has not yet been freed. Each handle must be
+/// passed to this function at most once.
 #[no_mangle]
-pub extern "C" fn sm_memory_free(mem: *mut Memory) {
+pub unsafe extern "C" fn sm_memory_free(mem: *mut Memory) {
     if mem.is_null() {
         return;
     }
@@ -104,8 +125,15 @@ pub extern "C" fn sm_memory_free(mem: *mut Memory) {
 /// buffer of `mem`. All three string pointers must be valid, null-
 /// terminated UTF-8. Invalid UTF-8, null arguments, or a null memory
 /// handle silently drop the event.
+/// # Safety
+///
+/// `mem` must be null or a live `*mut Memory` from [`sm_memory_new`].
+/// Each of `subject`, `predicate`, `object` must be null or point at a
+/// NUL-terminated, valid-UTF-8 byte sequence that remains readable for
+/// the duration of the call. Any null or non-UTF-8 argument drops the
+/// event silently.
 #[no_mangle]
-pub extern "C" fn sm_memory_update(
+pub unsafe extern "C" fn sm_memory_update(
     mem: *mut Memory,
     subject: *const c_char,
     predicate: *const c_char,
@@ -136,8 +164,14 @@ pub extern "C" fn sm_memory_update(
 /// `8*i` in the most significant position of the byte. The caller must
 /// guarantee at least [`PACKED_LEN`] writable bytes at the target. Null
 /// inputs are silent no-ops.
+/// # Safety
+///
+/// `mem` must be null or a live handle from [`sm_memory_new`]. If
+/// `out_packed_ptr` is non-null it must point at a writable buffer of
+/// at least [`PACKED_LEN`] bytes; the function writes exactly that
+/// many bytes. Passing null for either pointer is a silent no-op.
 #[no_mangle]
-pub extern "C" fn sm_memory_working_memory(mem: *mut Memory, out_packed_ptr: *mut u8) {
+pub unsafe extern "C" fn sm_memory_working_memory(mem: *mut Memory, out_packed_ptr: *mut u8) {
     let _ = catch_unwind(AssertUnwindSafe(|| {
         if out_packed_ptr.is_null() {
             return;
@@ -157,8 +191,14 @@ pub extern "C" fn sm_memory_working_memory(mem: *mut Memory, out_packed_ptr: *mu
 /// The loop reads each operand as 156 little-endian-agnostic `u64`
 /// chunks plus a 2-byte tail and folds `count_ones` over their XOR; on
 /// x86-64 / aarch64 this lowers to the hardware popcount instruction.
+/// # Safety
+///
+/// If `a_packed` (resp. `b_packed`) is non-null it must point at a
+/// readable buffer of at least [`PACKED_LEN`] initialised bytes. Either
+/// or both pointers may be null, in which case the function returns
+/// `0.0` without dereferencing.
 #[no_mangle]
-pub extern "C" fn sm_hypervector_similarity(a_packed: *const u8, b_packed: *const u8) -> f32 {
+pub unsafe extern "C" fn sm_hypervector_similarity(a_packed: *const u8, b_packed: *const u8) -> f32 {
     catch_unwind(AssertUnwindSafe(|| {
         if a_packed.is_null() || b_packed.is_null() {
             return 0.0_f32;
@@ -180,7 +220,7 @@ pub extern "C" fn sm_hypervector_similarity(a_packed: *const u8, b_packed: *cons
         }
         let tail_off = FULL_U64_CHUNKS * 8;
         for i in 0..TAIL_BYTES {
-            diff += u32::from((a[tail_off + i] ^ b[tail_off + i]).count_ones());
+            diff += (a[tail_off + i] ^ b[tail_off + i]).count_ones();
         }
         (D as f32 - 2.0 * diff as f32) / D as f32
     }))
@@ -226,22 +266,24 @@ mod tests {
         let v = random_hypervector(&mut rng);
         let mut buf = [0u8; PACKED_LEN];
         pack_hypervector(&v, &mut buf);
-        let s = sm_hypervector_similarity(buf.as_ptr(), buf.as_ptr());
+        let s = unsafe { sm_hypervector_similarity(buf.as_ptr(), buf.as_ptr()) };
         assert!((s - 1.0).abs() < 1e-6, "self-similarity = {s}");
     }
 
     #[test]
     fn null_inputs_are_safe() {
-        sm_codebook_free(ptr::null_mut());
-        sm_memory_free(ptr::null_mut());
-        assert!(sm_memory_new(ptr::null_mut()).is_null());
-        sm_memory_update(
-            ptr::null_mut(),
-            ptr::null(),
-            ptr::null(),
-            ptr::null(),
-        );
-        sm_memory_working_memory(ptr::null_mut(), ptr::null_mut());
-        assert_eq!(sm_hypervector_similarity(ptr::null(), ptr::null()), 0.0);
+        unsafe {
+            sm_codebook_free(ptr::null_mut());
+            sm_memory_free(ptr::null_mut());
+            assert!(sm_memory_new(ptr::null_mut()).is_null());
+            sm_memory_update(
+                ptr::null_mut(),
+                ptr::null(),
+                ptr::null(),
+                ptr::null(),
+            );
+            sm_memory_working_memory(ptr::null_mut(), ptr::null_mut());
+            assert_eq!(sm_hypervector_similarity(ptr::null(), ptr::null()), 0.0);
+        }
     }
 }

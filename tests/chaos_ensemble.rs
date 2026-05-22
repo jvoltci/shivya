@@ -38,7 +38,7 @@ use shivya_p2p::transport::UdpTransport;
 use tokio::sync::{mpsc, Mutex};
 
 const N: usize = 7;
-const SEED: u64 = 0xC0FFEE_FEED_BEEF;
+const SEED: u64 = 0x00C0_FFEE_FEED_BEEF;
 const PACKET_DROP_RATE: f64 = 0.15;
 const TOTAL_STEPS: usize = 80;
 const WARMUP_STEPS: usize = 10;

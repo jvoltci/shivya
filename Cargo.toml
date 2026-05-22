@@ -23,6 +23,18 @@ members = [
     "crates/shivya-mind"
 ]
 
+# Workspace-wide clippy policy. We treat all warnings as deny in CI
+# (`cargo clippy --workspace --all-targets -- -D warnings`) but allow a
+# small handful of lints that consistently mis-fire on tight numerical
+# code: parallel-indexed array iteration reads better than chained
+# enumerate(), `&Vec<f64>` is the established signature shape through
+# the math crates, and several mathematical constructor functions
+# legitimately take a high arity.
+[workspace.lints.clippy]
+needless_range_loop = "allow"
+ptr_arg = "allow"
+too_many_arguments = "allow"
+
 [dependencies]
 shivya-hodge = { version = "0.4.0", path = "crates/shivya-hodge" }
 shivya-flux = { version = "0.4.0", path = "crates/shivya-flux" }
@@ -33,3 +45,6 @@ shivya-turing = { version = "0.4.0", path = "crates/shivya-turing" }
 [dev-dependencies]
 shivya-p2p = { version = "0.4.0", path = "crates/shivya-p2p" }
 tokio = { version = "1.0", features = ["full"] }
+
+[lints]
+workspace = true

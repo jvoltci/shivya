@@ -8,9 +8,22 @@ keywords = ["vsa", "hyperdimensional", "memory", "active-inference", "edge"]
 homepage = "https://github.com/jvoltci/shivya"
 repository = "https://github.com/jvoltci/shivya"
 
+[lib]
+# `cdylib` produces the platform shared object (`libshivya_mind.so` on
+# Android, `libshivya_mind.dylib` on macOS, `shivya_mind.dll` on Windows)
+# that the Kotlin JNI layer loads via `System.loadLibrary("shivya_mind")`.
+# `rlib` is retained so that other Rust crates in the workspace
+# (notably `shivya-flux` via dev-deps) can keep linking statically.
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 bitvec = { version = "1.0", default-features = false, features = ["alloc"] }
 blake3 = "1.5"
+# `default-features = false` excludes the `invocation` feature, which
+# would pull in libjvm linkage (only needed when *embedding* a JVM
+# inside a Rust process). We are the embedded library, not the host,
+# so the runtime JVM provides every JNI symbol we touch at load time.
+jni = { version = "0.21", default-features = false }
 
 [dev-dependencies]
 shivya-flux = { version = "0.4.0", path = "../shivya-flux" }

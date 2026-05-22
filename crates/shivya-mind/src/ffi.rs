@@ -253,6 +253,351 @@ fn pack_hypervector(hv: &crate::vsa::Hypervector, out: &mut [u8]) {
     }
 }
 
+// =====================================================================
+// JNI surface
+// =====================================================================
+//
+// `JNI_OnLoad` runs exactly once per class loader when the JVM calls
+// `System.loadLibrary("shivya_mind")`. It uses the JNI environment to
+// locate `io.github.jvoltci.shivya.mind.ShivyaMindNative` and register
+// the seven `external fun` declarations directly against the shim
+// functions in `jni_bindings` below.
+//
+// Why shims, not raw `sm_*` bindings? Every JVM-side native call uses
+// the `(JNIEnv*, jclass, ...args...)` calling convention with JVM-typed
+// arguments (`jbyteArray`, `jstring`, `jobject` for `ByteBuffer`). The
+// `sm_*` C ABI uses raw C-typed pointers (`*const u8`, `*const c_char`,
+// `*mut Memory`). Binding the JVM table straight to the C ABI symbols
+// would crash on the first call. The shims adapt one to the other in a
+// thin, zero-extra-copy layer:
+//   - `JByteArray` -> bytes via `convert_byte_array` (one-shot copy on
+//     codebook construction; not a hot path)
+//   - `JString`    -> NUL-terminated UTF-8 via `JavaStr` (deref to CStr)
+//   - `JByteBuffer` -> direct address + capacity via
+//                      `get_direct_buffer_address` / `_capacity`
+//                      (genuine zero-copy; the contract documented in
+//                      `ShivyaMindNative.kt` requires direct buffers).
+//
+// All seven shims wrap their body in `catch_unwind` so a Rust panic
+// cannot cross the JVM boundary; on panic the shim returns a typed
+// "no-op" value matching the underlying `sm_*` failure mode.
+
+#[allow(non_snake_case)] // JNI_OnLoad and JNI types are JNI-spec names.
+mod jni_bindings {
+    use super::{
+        sm_codebook_free, sm_codebook_new, sm_hypervector_similarity, sm_memory_free,
+        sm_memory_new, sm_memory_update, sm_memory_working_memory, PACKED_LEN,
+    };
+    use crate::codebook::Codebook;
+    use crate::memory::Memory;
+    use jni::objects::{JByteArray, JByteBuffer, JClass, JString};
+    use jni::sys::{jfloat, jint, jlong};
+    use jni::JNIEnv;
+    use std::os::raw::c_char;
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    use std::ptr;
+
+    /// `external fun sm_codebook_new(salt: ByteArray?, saltLen: Int): Long`
+    ///
+    /// Signature: `([BI)J`
+    pub(super) extern "system" fn jni_sm_codebook_new<'local>(
+        env: JNIEnv<'local>,
+        _class: JClass<'local>,
+        salt: JByteArray<'local>,
+        salt_len: jint,
+    ) -> jlong {
+        catch_unwind(AssertUnwindSafe(|| {
+            // Null array or non-positive length selects the engine default
+            // salt path on the C side (which itself ignores the length and
+            // falls back to `DEFAULT_SALT`).
+            if salt.is_null() || salt_len <= 0 {
+                // SAFETY: passing (null, 0) is the documented null path
+                // of `sm_codebook_new`.
+                let ptr = unsafe { sm_codebook_new(ptr::null(), 0) };
+                return ptr as jlong;
+            }
+            // `convert_byte_array` copies the bytes out of the JVM heap.
+            // Codebook construction is one-shot and off the hot path so
+            // a single copy is acceptable.
+            let bytes = match env.convert_byte_array(&salt) {
+                Ok(v) => v,
+                Err(_) => return 0,
+            };
+            let len = bytes.len().min(salt_len as usize);
+            // SAFETY: `bytes` is a Rust-owned Vec; `len` is bounded by
+            // its actual length.
+            let ptr = unsafe { sm_codebook_new(bytes.as_ptr(), len) };
+            ptr as jlong
+        }))
+        .unwrap_or(0)
+    }
+
+    /// `external fun sm_codebook_free(cb: Long)`
+    ///
+    /// Signature: `(J)V`
+    pub(super) extern "system" fn jni_sm_codebook_free<'local>(
+        _env: JNIEnv<'local>,
+        _class: JClass<'local>,
+        cb: jlong,
+    ) {
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            // SAFETY: `cb` is either zero (handled as null no-op inside
+            // `sm_codebook_free`) or a handle the caller previously
+            // obtained from `sm_codebook_new` and has not yet freed.
+            unsafe { sm_codebook_free(cb as *mut Codebook) };
+        }));
+    }
+
+    /// `external fun sm_memory_new(cb: Long): Long`
+    ///
+    /// Signature: `(J)J`
+    pub(super) extern "system" fn jni_sm_memory_new<'local>(
+        _env: JNIEnv<'local>,
+        _class: JClass<'local>,
+        cb: jlong,
+    ) -> jlong {
+        catch_unwind(AssertUnwindSafe(|| {
+            // SAFETY: `cb` is either zero (handled as null inside
+            // `sm_memory_new`) or a live codebook handle. Either way
+            // the underlying function tolerates a null input.
+            let ptr = unsafe { sm_memory_new(cb as *mut Codebook) };
+            ptr as jlong
+        }))
+        .unwrap_or(0)
+    }
+
+    /// `external fun sm_memory_free(mem: Long)`
+    ///
+    /// Signature: `(J)V`
+    pub(super) extern "system" fn jni_sm_memory_free<'local>(
+        _env: JNIEnv<'local>,
+        _class: JClass<'local>,
+        mem: jlong,
+    ) {
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            // SAFETY: same null-tolerant contract as the codebook free.
+            unsafe { sm_memory_free(mem as *mut Memory) };
+        }));
+    }
+
+    /// `external fun sm_memory_update(mem: Long, subject: String, predicate: String, object: String)`
+    ///
+    /// Signature: `(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V`
+    pub(super) extern "system" fn jni_sm_memory_update<'local>(
+        mut env: JNIEnv<'local>,
+        _class: JClass<'local>,
+        mem: jlong,
+        subject: JString<'local>,
+        predicate: JString<'local>,
+        object: JString<'local>,
+    ) {
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            // `JNIEnv::get_string` calls `GetStringUTFChars` which
+            // returns a NUL-terminated modified UTF-8 buffer; the
+            // resulting `JavaStr` derefs to a `CStr` whose pointer we
+            // can hand straight to the C ABI without an extra copy.
+            let s = match env.get_string(&subject) {
+                Ok(v) => v,
+                Err(_) => return,
+            };
+            let p = match env.get_string(&predicate) {
+                Ok(v) => v,
+                Err(_) => return,
+            };
+            let o = match env.get_string(&object) {
+                Ok(v) => v,
+                Err(_) => return,
+            };
+            // SAFETY: the three `JavaStr` values keep the JVM-owned
+            // UTF buffers pinned for the duration of this call; the
+            // raw pointers stay valid until `s`/`p`/`o` are dropped,
+            // which happens after `sm_memory_update` returns.
+            unsafe {
+                sm_memory_update(
+                    mem as *mut Memory,
+                    s.as_ptr() as *const c_char,
+                    p.as_ptr() as *const c_char,
+                    o.as_ptr() as *const c_char,
+                );
+            }
+        }));
+    }
+
+    /// `external fun sm_memory_working_memory(mem: Long, outPackedBuffer: ByteBuffer)`
+    ///
+    /// Signature: `(JLjava/nio/ByteBuffer;)V`
+    pub(super) extern "system" fn jni_sm_memory_working_memory<'local>(
+        env: JNIEnv<'local>,
+        _class: JClass<'local>,
+        mem: jlong,
+        out_buffer: JByteBuffer<'local>,
+    ) {
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            if out_buffer.is_null() {
+                return;
+            }
+            // `get_direct_buffer_address` returns the underlying native
+            // pointer if (and only if) the buffer was allocated with
+            // `ByteBuffer.allocateDirect`. A heap-array-backed buffer
+            // yields a null/error -- we surface that as a no-op rather
+            // than silently copying through a bounce buffer, so a
+            // misuse on the Kotlin side is loud, not slow.
+            let addr = match env.get_direct_buffer_address(&out_buffer) {
+                Ok(p) if !p.is_null() => p,
+                _ => return,
+            };
+            let cap = match env.get_direct_buffer_capacity(&out_buffer) {
+                Ok(n) => n,
+                Err(_) => return,
+            };
+            if cap < PACKED_LEN {
+                return;
+            }
+            // SAFETY: `addr` is a writable native buffer of at least
+            // `PACKED_LEN` bytes (just verified). `mem` is either zero
+            // (null-tolerated) or a live `*mut Memory`.
+            unsafe { sm_memory_working_memory(mem as *mut Memory, addr) };
+        }));
+    }
+
+    /// `external fun sm_hypervector_similarity(aPacked: ByteBuffer, bPacked: ByteBuffer): Float`
+    ///
+    /// Signature: `(Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)F`
+    pub(super) extern "system" fn jni_sm_hypervector_similarity<'local>(
+        env: JNIEnv<'local>,
+        _class: JClass<'local>,
+        a_packed: JByteBuffer<'local>,
+        b_packed: JByteBuffer<'local>,
+    ) -> jfloat {
+        catch_unwind(AssertUnwindSafe(|| {
+            if a_packed.is_null() || b_packed.is_null() {
+                return 0.0_f32;
+            }
+            let a_addr = match env.get_direct_buffer_address(&a_packed) {
+                Ok(p) if !p.is_null() => p,
+                _ => return 0.0,
+            };
+            let b_addr = match env.get_direct_buffer_address(&b_packed) {
+                Ok(p) if !p.is_null() => p,
+                _ => return 0.0,
+            };
+            let a_cap = match env.get_direct_buffer_capacity(&a_packed) {
+                Ok(n) => n,
+                Err(_) => return 0.0,
+            };
+            let b_cap = match env.get_direct_buffer_capacity(&b_packed) {
+                Ok(n) => n,
+                Err(_) => return 0.0,
+            };
+            if a_cap < PACKED_LEN || b_cap < PACKED_LEN {
+                return 0.0;
+            }
+            // SAFETY: both buffers verified non-null, direct-addressable,
+            // and at least `PACKED_LEN` bytes long.
+            unsafe { sm_hypervector_similarity(a_addr, b_addr) }
+        }))
+        .unwrap_or(0.0)
+    }
+}
+
+/// JVM entry point. Runs exactly once per class loader when the host
+/// calls `System.loadLibrary("shivya_mind")`. Locates the Kotlin
+/// `ShivyaMindNative` companion object and binds its seven
+/// `external fun` declarations to the JNI shims above via
+/// `RegisterNatives`. Returns the JNI version this library is built
+/// against on success, or `JNI_ERR` on any failure.
+///
+/// The signature uses `*mut c_void` for `vm` / `reserved` to keep the
+/// declaration source-stable against any future bump of the `jni`
+/// crate's type aliases; the cast to `*mut jni::sys::JavaVM` is the
+/// reverse of the alias and is a no-op at the ABI level.
+///
+/// # Safety
+///
+/// Called by the JVM with `vm` pointing at a live `JavaVM` for the
+/// duration of the call. Nothing in this function should outlive the
+/// call frame except the registered method table, which the JVM
+/// retains internally.
+#[no_mangle]
+pub extern "system" fn JNI_OnLoad(
+    vm: *mut std::ffi::c_void,
+    _reserved: *mut std::ffi::c_void,
+) -> i32 {
+    use jni::sys::{JNI_ERR, JNI_VERSION_1_6};
+    use jni::{JavaVM, NativeMethod};
+    use std::os::raw::c_void;
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+
+    let result = catch_unwind(AssertUnwindSafe(|| -> i32 {
+        // SAFETY: JNI guarantees `vm` points at a live JavaVM for the
+        // duration of `JNI_OnLoad`. Wrapping it in `JavaVM` does not
+        // take ownership; the JVM continues to own the underlying VM.
+        let vm = match unsafe { JavaVM::from_raw(vm as *mut jni::sys::JavaVM) } {
+            Ok(v) => v,
+            Err(_) => return JNI_ERR,
+        };
+        let mut env = match vm.get_env() {
+            Ok(e) => e,
+            Err(_) => return JNI_ERR,
+        };
+        let class = match env.find_class("io/github/jvoltci/shivya/mind/ShivyaMindNative") {
+            Ok(c) => c,
+            Err(_) => return JNI_ERR,
+        };
+
+        // One NativeMethod per Kotlin `external fun`. The function
+        // pointers are the JNI shims above; they bridge JVM types to
+        // the C ABI exposed by `sm_*`.
+        let methods = [
+            NativeMethod {
+                name: "sm_codebook_new".into(),
+                sig: "([BI)J".into(),
+                fn_ptr: jni_bindings::jni_sm_codebook_new as *mut c_void,
+            },
+            NativeMethod {
+                name: "sm_codebook_free".into(),
+                sig: "(J)V".into(),
+                fn_ptr: jni_bindings::jni_sm_codebook_free as *mut c_void,
+            },
+            NativeMethod {
+                name: "sm_memory_new".into(),
+                sig: "(J)J".into(),
+                fn_ptr: jni_bindings::jni_sm_memory_new as *mut c_void,
+            },
+            NativeMethod {
+                name: "sm_memory_free".into(),
+                sig: "(J)V".into(),
+                fn_ptr: jni_bindings::jni_sm_memory_free as *mut c_void,
+            },
+            NativeMethod {
+                name: "sm_memory_update".into(),
+                sig: "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V".into(),
+                fn_ptr: jni_bindings::jni_sm_memory_update as *mut c_void,
+            },
+            NativeMethod {
+                name: "sm_memory_working_memory".into(),
+                sig: "(JLjava/nio/ByteBuffer;)V".into(),
+                fn_ptr: jni_bindings::jni_sm_memory_working_memory as *mut c_void,
+            },
+            NativeMethod {
+                name: "sm_hypervector_similarity".into(),
+                sig: "(Ljava/nio/ByteBuffer;Ljava/nio/ByteBuffer;)F".into(),
+                fn_ptr: jni_bindings::jni_sm_hypervector_similarity as *mut c_void,
+            },
+        ];
+
+        match env.register_native_methods(&class, &methods) {
+            Ok(()) => JNI_VERSION_1_6,
+            Err(_) => JNI_ERR,
+        }
+    }));
+
+    match result {
+        Ok(v) => v,
+        Err(_) => JNI_ERR,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

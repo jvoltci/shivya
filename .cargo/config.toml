@@ -1,0 +1,65 @@
+# ------------------------------------------------------------------
+# Android cross-compilation targets for `shivya-mind`.
+#
+# This file declares the linker / archiver for the two Android NDK
+# triples we ship: `aarch64-linux-android` (modern physical devices —
+# arm64-v8a ABI) and `x86_64-linux-android` (Android Studio emulator
+# images on x86 hosts). The Rust toolchain itself ships pre-built
+# `std` for both targets; the linker comes from the Android NDK.
+#
+# Prerequisites (one-time, on the developer host):
+#
+#   1. Install the Rust target sysroots:
+#        rustup target add aarch64-linux-android
+#        rustup target add x86_64-linux-android
+#
+#   2. Install the Android NDK (r25 or newer). The wrappers below
+#      assume the NDK's `toolchains/llvm/prebuilt/<host>/bin`
+#      directory is on $PATH, e.g.:
+#        export PATH="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin:$PATH"
+#
+#      (Replace `darwin-x86_64` with `linux-x86_64` on a Linux host.)
+#
+#      The min-SDK level encoded in the linker name (`21` below) is
+#      the floor: API level 21 = Android 5.0 Lollipop. Bump it if
+#      you require a newer NDK contract.
+#
+#   3. `shivya-mind` depends on `blake3`, whose `build.rs` invokes a
+#      C compiler via `cc-rs`. `cc-rs` does NOT read the `linker`
+#      keys below — it resolves its own toolchain from environment
+#      variables. Export these for cross-compilation:
+#        export CC_aarch64_linux_android=aarch64-linux-android21-clang
+#        export AR_aarch64_linux_android=llvm-ar
+#        export CC_x86_64_linux_android=x86_64-linux-android21-clang
+#        export AR_x86_64_linux_android=llvm-ar
+#      Or, equivalently and recommended for CI, use `cargo-ndk` which
+#      sets every cc-rs env var consistent with the Rust linker
+#      config below in a single invocation:
+#        cargo install cargo-ndk
+#        cargo ndk -t arm64-v8a -t x86_64 -o ./jniLibs build --release -p shivya-mind
+#
+# Build command (produces `libshivya_mind.so` for each ABI):
+#
+#   cargo build -p shivya-mind --release --target aarch64-linux-android
+#   cargo build -p shivya-mind --release --target x86_64-linux-android
+#
+# Outputs land at:
+#   target/aarch64-linux-android/release/libshivya_mind.so
+#   target/x86_64-linux-android/release/libshivya_mind.so
+#
+# These are the binaries packaged into the Android app at
+# `app/src/main/jniLibs/{arm64-v8a,x86_64}/libshivya_mind.so`.
+#
+# `cargo-ndk` (https://github.com/bbqsrc/cargo-ndk) wraps these
+# invocations and copies the artefacts directly into a jniLibs/
+# layout — recommended for CI but optional; this config alone is
+# sufficient for a plain `cargo build`.
+# ------------------------------------------------------------------
+
+[target.aarch64-linux-android]
+linker = "aarch64-linux-android21-clang"
+ar = "llvm-ar"
+
+[target.x86_64-linux-android]
+linker = "x86_64-linux-android21-clang"
+ar = "llvm-ar"

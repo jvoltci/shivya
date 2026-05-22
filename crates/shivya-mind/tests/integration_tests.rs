@@ -179,7 +179,7 @@ fn consolidate_day_applies_power_law_decay() {
     // we re-derive from the encoder for stability).
     let f_alice = mem.encode_event(&fact);
     let proj_day1 = project(&m_day1, &f_alice);
-    let proj_day2 = project(&mem.m_tally().to_vec(), &f_alice);
+    let proj_day2 = project(mem.m_tally().as_ref(), &f_alice);
     let alpha_expected = (1.0_f32 + 30.0).powf(-0.5);
     let ratio = proj_day2 / proj_day1;
     // Day-2 fold added one unrelated bipolar event roughly orthogonal
@@ -270,7 +270,7 @@ fn boundary_f1(
             if matched_true.contains(t) {
                 continue;
             }
-            let diff = if *p >= *t { *p - *t } else { *t - *p };
+            let diff = (*p).abs_diff(*t);
             if diff > tolerance {
                 continue;
             }

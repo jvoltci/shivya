@@ -57,6 +57,12 @@ pub struct KBucket {
     pub count: usize,
 }
 
+impl Default for KBucket {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KBucket {
     pub fn new() -> Self {
         Self {

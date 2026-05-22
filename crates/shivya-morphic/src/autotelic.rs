@@ -9,7 +9,7 @@ pub fn last_stabilization_event() -> Option<SubstrateError> {
 
 thread_local! {
     static LAST_STAB_EVENT: std::cell::RefCell<Option<SubstrateError>> =
-        std::cell::RefCell::new(None);
+        const { std::cell::RefCell::new(None) };
 }
 
 fn record_stab_event(evt: Option<SubstrateError>) {

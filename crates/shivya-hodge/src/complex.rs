@@ -10,6 +10,12 @@ pub struct SimplicialStateComplex {
     pub edge_states: Vec<f64>,
 }
 
+impl Default for SimplicialStateComplex {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SimplicialStateComplex {
     pub fn new() -> Self {
         Self {

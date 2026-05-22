@@ -86,7 +86,7 @@ mod tests {
         // d1 * reconciled should be zero (or close to 0)
         let d1 = complex.d1().expect("d1 is well-defined for this fixture");
         let curl = d1.mul_vec(&reconciled).expect("dims match by construction");
-        assert!(curl.len() > 0);
+        assert!(!curl.is_empty());
         for &val in &curl {
             assert!(val.abs() < 1e-7, "Curl should be projected out, got {}", val);
         }

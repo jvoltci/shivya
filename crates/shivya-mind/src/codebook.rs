@@ -1,8 +1,8 @@
 //! Cryptographic symbol table: label -> Hypervector via blake3-seeded PCG.
 
 use crate::vsa::{permute, random_hypervector, Hypervector, Pcg32};
-use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::sync::Mutex;
 
 /// Default codebook salt. Two devices using the same salt and label
 /// receive byte-identical hypervectors without any synchronisation.
@@ -53,10 +53,16 @@ impl Role {
 }
 
 /// Lazy, deterministic mapping from labels to Rademacher hypervectors.
+///
+/// The label cache uses a `Mutex` rather than a `RefCell` so the type is
+/// `Sync`, which lets `Arc<Codebook>` be shared across the FFI boundary
+/// and between Tokio worker threads. The lock is only taken on first
+/// touch of a label; subsequent lookups hit the cache. Hash + PRNG cost
+/// dominates the lock cost on the slow path.
 #[derive(Debug)]
 pub struct Codebook {
     salt: Vec<u8>,
-    cache: RefCell<BTreeMap<String, Hypervector>>,
+    cache: Mutex<BTreeMap<String, Hypervector>>,
     time_base: Hypervector,
     /// Lightweight stream id used for bundle tie-breaking. Derived
     /// deterministically from the salt so two devices share the same
@@ -70,7 +76,7 @@ impl Codebook {
         let bundle_stream = stream_from_salt(salt);
         Self {
             salt: salt.to_vec(),
-            cache: RefCell::new(BTreeMap::new()),
+            cache: Mutex::new(BTreeMap::new()),
             time_base,
             bundle_stream,
         }
@@ -93,11 +99,17 @@ impl Codebook {
 
     /// Return the hypervector for `label`, generating it if missing.
     pub fn get(&self, label: &str) -> Hypervector {
-        if let Some(v) = self.cache.borrow().get(label) {
-            return *v;
+        {
+            let cache = self.cache.lock().expect("codebook cache mutex poisoned");
+            if let Some(v) = cache.get(label) {
+                return *v;
+            }
         }
         let v = vector_from_label(&self.salt, label);
-        self.cache.borrow_mut().insert(label.to_string(), v);
+        self.cache
+            .lock()
+            .expect("codebook cache mutex poisoned")
+            .insert(label.to_string(), v);
         v
     }
 
@@ -113,13 +125,17 @@ impl Codebook {
 
     /// Number of distinct labels currently in the cache.
     pub fn cache_len(&self) -> usize {
-        self.cache.borrow().len()
+        self.cache
+            .lock()
+            .expect("codebook cache mutex poisoned")
+            .len()
     }
 
     /// Iterate (label, vector) pairs from the cache as a snapshot.
     pub fn snapshot(&self) -> Vec<(String, Hypervector)> {
         self.cache
-            .borrow()
+            .lock()
+            .expect("codebook cache mutex poisoned")
             .iter()
             .map(|(k, v)| (k.clone(), *v))
             .collect()

@@ -29,12 +29,12 @@ impl MitosisEngine {
                     system.active[d] = true;
                     // Inherit morphogen values with small symmetry-breaking perturbation
                     system.u[d] = system.u[i] - self.epsilon;
-                    system.u[i] = system.u[i] + self.epsilon;
-                    
+                    system.u[i] += self.epsilon;
+
                     system.v[d] = system.v[i];
 
                     // Copy and perturb the internal belief vectors
-                    if beliefs[i].len() > 0 {
+                    if !beliefs[i].is_empty() {
                         beliefs[d] = beliefs[i].clone();
                         beliefs[i][0] -= self.epsilon;
                         beliefs[d][0] += self.epsilon;

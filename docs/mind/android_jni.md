@@ -15,8 +15,12 @@ is no Android-specific shim crate.
 
 ## 1. The C ABI surface (recap)
 
-The Rust side exposes five `#[no_mangle] extern "C"` entry points and
-one compile-time constant. All entry points are wrapped in
+The Rust side exposes seven `#[no_mangle] unsafe extern "C"` entry
+points and one compile-time constant. Each entry point dereferences a
+caller-supplied raw pointer, so the Rust-side declaration is
+`pub unsafe extern "C" fn …` for clippy / soundness reasons — the C
+ABI itself is unchanged, and Kotlin / Swift callers see the symbols
+exactly as before. All entry points are wrapped in
 `std::panic::catch_unwind` so a panic in Rust cannot cross the ABI
 boundary into the JVM.
 

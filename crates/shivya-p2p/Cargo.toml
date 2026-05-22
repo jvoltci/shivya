@@ -10,3 +10,6 @@ shivya-hodge = { version = "0.4.0", path = "../shivya-hodge" }
 shivya-onsager = { version = "0.4.0", path = "../shivya-onsager" }
 tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
+
+[lints]
+workspace = true

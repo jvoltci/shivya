@@ -5,6 +5,14 @@ pub struct MarkovBlanket<const S_DIM: usize, const A_DIM: usize, const I_DIM: us
     pub internal: [f64; I_DIM],
 }
 
+impl<const S_DIM: usize, const A_DIM: usize, const I_DIM: usize> Default
+    for MarkovBlanket<S_DIM, A_DIM, I_DIM>
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const S_DIM: usize, const A_DIM: usize, const I_DIM: usize> MarkovBlanket<S_DIM, A_DIM, I_DIM> {
     pub fn new() -> Self {
         Self {

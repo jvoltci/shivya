@@ -188,7 +188,7 @@ pub fn bundle(vecs: &[&Hypervector], rng: &mut Pcg32) -> Hypervector {
         return out;
     }
     let half = k / 2;
-    let even = k % 2 == 0;
+    let even = k.is_multiple_of(2);
     // Column-wise majority over D logical bits.
     // 40 KB on the stack is acceptable for our 8 MB main-thread budget;
     // a u16 counter is enough up to K = 65_535.

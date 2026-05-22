@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 450" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%">
   <defs>
     <!-- Background Gradient -->
     <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#070A13" />
-      <stop offset="50%" stop-color="#0C0F1D" />
-      <stop offset="100%" stop-color="#070A13" />
+      <stop offset="0%" stop-color="#05070F" />
+      <stop offset="50%" stop-color="#0B0E1B" />
+      <stop offset="100%" stop-color="#05070F" />
     </linearGradient>
 
     <!-- Glowing Node Gradients -->
@@ -29,7 +29,12 @@
       <stop offset="100%" stop-color="#EC4899" stop-opacity="0" />
     </radialGradient>
     
-    <!-- Phase 11 & Phase 12 glows -->
+    <!-- Cognitive & P2P / WS glows -->
+    <radialGradient id="mind-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F472B6" stop-opacity="0.6" />
+      <stop offset="50%" stop-color="#818CF8" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#818CF8" stop-opacity="0" />
+    </radialGradient>
     <radialGradient id="p2p-glow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#14B8A6" stop-opacity="0.8" />
       <stop offset="100%" stop-color="#14B8A6" stop-opacity="0" />
@@ -39,7 +44,14 @@
       <stop offset="100%" stop-color="#F43F5E" stop-opacity="0" />
     </radialGradient>
 
-    <!-- Line Gradients -->
+    <!-- Iridescent Mind Gradient -->
+    <linearGradient id="mind-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818CF8" />
+      <stop offset="50%" stop-color="#F472B6" />
+      <stop offset="100%" stop-color="#FBBF24" />
+    </linearGradient>
+
+    <!-- Outer Flow Gradients -->
     <linearGradient id="flow-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#3B82F6" />
       <stop offset="100%" stop-color="#10B981" />
@@ -61,116 +73,166 @@
       <stop offset="100%" stop-color="#3B82F6" />
     </linearGradient>
 
-    <filter id="blur-filter" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" />
+    <filter id="blur-filter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" />
     </filter>
   </defs>
 
   <!-- Background Card -->
-  <rect width="1000" height="450" rx="16" fill="url(#bg-grad)" stroke="#1E293B" stroke-width="1.5" />
+  <rect width="1000" height="480" rx="16" fill="url(#bg-grad)" stroke="#1A2035" stroke-width="1.5" />
 
   <!-- Grid Pattern Overlay -->
-  <g opacity="0.05">
-    <path d="M 0,50 L 1000,50 M 0,100 L 1000,100 M 0,150 L 1000,150 M 0,200 L 1000,200 M 0,250 L 1000,250 M 0,300 L 1000,300 M 0,350 L 1000,350 M 0,400 L 1000,400" stroke="#FFFFFF" stroke-width="1" />
-    <path d="M 100,0 L 100,450 M 200,0 L 200,450 M 300,0 L 300,450 M 400,0 L 400,450 M 500,0 L 500,450 M 600,0 L 600,450 M 700,0 L 700,450 M 800,0 L 800,450 M 900,0 L 900,450" stroke="#FFFFFF" stroke-width="1" />
+  <g opacity="0.04">
+    <path d="M 0,40 L 1000,40 M 0,80 L 1000,80 M 0,120 L 1000,120 M 0,160 L 1000,160 M 0,200 L 1000,200 M 0,240 L 1000,240 M 0,280 L 1000,280 M 0,320 L 1000,320 M 0,360 L 1000,360 M 0,400 L 1000,400 M 0,440 L 1000,440" stroke="#FFFFFF" stroke-width="1" />
+    <path d="M 80,0 L 80,480 M 160,0 L 160,480 M 240,0 L 240,480 M 320,0 L 320,480 M 400,0 L 400,480 M 480,0 L 480,480 M 560,0 L 560,480 M 640,0 L 640,480 M 720,0 L 720,480 M 80,0 L 80,480 M 880,0 L 880,480 M 960,0 L 960,480" stroke="#FFFFFF" stroke-width="1" />
   </g>
 
-  <!-- Causal Flow Ring (Underlay) -->
-  <circle cx="500" cy="225" r="140" fill="none" stroke="rgba(255, 255, 255, 0.03)" stroke-width="2" />
-  <circle cx="500" cy="225" r="140" fill="none" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="10 30" opacity="0.6">
-    <animateTransform attributeName="transform" type="rotate" from="0 500 225" to="360 500 225" dur="40s" repeatCount="indefinite" />
+  <!-- Ambient background watermark mathematics -->
+  <g opacity="0.15" font-family="monospace" font-size="11" fill="#475569">
+    <text x="50" y="60">D = 10,000 bits</text>
+    <text x="50" y="80">x ∈ {−1, +1}^D</text>
+    <text x="800" y="390">L_ij = L_ji</text>
+    <text x="800" y="410">dt ≤ 0.45 / (D·d)</text>
+  </g>
+
+  <!-- Causal Flow Ring (Outer Boundary) -->
+  <circle cx="500" cy="225" r="140" fill="none" stroke="rgba(255, 255, 255, 0.02)" stroke-width="2.5" />
+  <circle cx="500" cy="225" r="140" fill="none" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="8 24" opacity="0.4">
+    <animateTransform attributeName="transform" type="rotate" from="0 500 225" to="360 500 225" dur="30s" repeatCount="indefinite" />
   </circle>
 
-  <!-- Layer Connectivity Lines -->
-  <!-- Hodge to Flux -->
-  <line x1="500" y1="85" x2="633" y2="182" stroke="url(#flow-grad-1)" stroke-width="2.5" stroke-linecap="round" />
-  <!-- Flux to Morphic -->
-  <line x1="633" y1="182" x2="582" y2="338" stroke="url(#flow-grad-2)" stroke-width="2.5" stroke-linecap="round" />
-  <!-- Morphic to Onsager -->
-  <line x1="582" y1="338" x2="418" y2="338" stroke="url(#flow-grad-3)" stroke-width="2.5" stroke-linecap="round" />
-  <!-- Onsager to Turing -->
-  <line x1="418" y1="338" x2="367" y2="182" stroke="url(#flow-grad-4)" stroke-width="2.5" stroke-linecap="round" />
-  <!-- Turing to Hodge -->
-  <line x1="367" y1="182" x2="500" y2="85" stroke="url(#flow-grad-5)" stroke-width="2.5" stroke-linecap="round" />
+  <!-- Layer Connectivity Pentagonal Ring -->
+  <line x1="500" y1="85" x2="633" y2="182" stroke="url(#flow-grad-1)" stroke-width="2" stroke-linecap="round" />
+  <line x1="633" y1="182" x2="582" y2="338" stroke="url(#flow-grad-2)" stroke-width="2" stroke-linecap="round" />
+  <line x1="582" y1="338" x2="418" y2="338" stroke="url(#flow-grad-3)" stroke-width="2" stroke-linecap="round" />
+  <line x1="418" y1="338" x2="367" y2="182" stroke="url(#flow-grad-4)" stroke-width="2" stroke-linecap="round" />
+  <line x1="367" y1="182" x2="500" y2="85" stroke="url(#flow-grad-5)" stroke-width="2" stroke-linecap="round" />
 
-  <!-- Phase 11: P2P Network Integration Lines -->
-  <line x1="200" y1="100" x2="500" y2="85" stroke="rgba(20, 184, 166, 0.4)" stroke-width="1.5" stroke-dasharray="4 4" />
-  <line x1="200" y1="100" x2="418" y2="338" stroke="rgba(20, 184, 166, 0.4)" stroke-width="1.5" stroke-dasharray="4 4" />
+  <!-- P2P and Visualizer Integration Lines -->
+  <line x1="200" y1="100" x2="500" y2="85" stroke="rgba(20, 184, 166, 0.3)" stroke-width="1.2" stroke-dasharray="3 3" />
+  <line x1="200" y1="100" x2="418" y2="338" stroke="rgba(20, 184, 166, 0.3)" stroke-width="1.2" stroke-dasharray="3 3" />
+  <line x1="800" y1="100" x2="500" y2="85" stroke="rgba(244, 63, 94, 0.3)" stroke-width="1.2" stroke-dasharray="3 3" />
+  <line x1="800" y1="100" x2="633" y2="182" stroke="rgba(244, 63, 94, 0.3)" stroke-width="1.2" stroke-dasharray="3 3" />
 
-  <!-- Phase 12: WebOS WebSocket Visualizer Integration Lines -->
-  <line x1="800" y1="100" x2="500" y2="85" stroke="rgba(244, 63, 94, 0.4)" stroke-width="1.5" stroke-dasharray="4 4" />
-  <line x1="800" y1="100" x2="633" y2="182" stroke="rgba(244, 63, 94, 0.4)" stroke-width="1.5" stroke-dasharray="4 4" />
+  <!-- Active Cognitive Telemetry Flows (Spoke Lines from layers to Shivya Mind) -->
+  <!-- Layer 0 -> Mind (Topology stream) -->
+  <line x1="500" y1="85" x2="500" y2="225" stroke="#3B82F6" stroke-width="1.5" stroke-dasharray="4 8" opacity="0.6">
+    <animate attributeName="stroke-dashoffset" values="36;0" dur="2.5s" repeatCount="indefinite" />
+  </line>
+  <!-- Layer 1 -> Mind (Free Energy Surprise stream) -->
+  <line x1="633" y1="182" x2="500" y2="225" stroke="#10B981" stroke-width="1.5" stroke-dasharray="4 8" opacity="0.6">
+    <animate attributeName="stroke-dashoffset" values="36;0" dur="2.0s" repeatCount="indefinite" />
+  </line>
+  <!-- Layer 2 -> Mind (Instruction Mutation stream) -->
+  <line x1="582" y1="338" x2="500" y2="225" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="4 8" opacity="0.6">
+    <animate attributeName="stroke-dashoffset" values="36;0" dur="2.8s" repeatCount="indefinite" />
+  </line>
+  <!-- Layer 3 -> Mind (Coalition Diffusion stream) -->
+  <line x1="418" y1="338" x2="500" y2="225" stroke="#8B5CF6" stroke-width="1.5" stroke-dasharray="4 8" opacity="0.6">
+    <animate attributeName="stroke-dashoffset" values="36;0" dur="2.2s" repeatCount="indefinite" />
+  </line>
+  <!-- Layer 4 -> Mind (Reaction Hotspots stream) -->
+  <line x1="367" y1="182" x2="500" y2="225" stroke="#EC4899" stroke-width="1.5" stroke-dasharray="4 8" opacity="0.6">
+    <animate attributeName="stroke-dashoffset" values="36;0" dur="2.6s" repeatCount="indefinite" />
+  </line>
 
-  <!-- Glowing Aura Backdrops -->
-  <circle cx="500" cy="85" r="35" fill="url(#hodge-glow)" filter="url(#blur-filter)" />
-  <circle cx="633" cy="182" r="35" fill="url(#flux-glow)" filter="url(#blur-filter)" />
-  <circle cx="582" cy="338" r="35" fill="url(#morphic-glow)" filter="url(#blur-filter)" />
-  <circle cx="418" cy="338" r="35" fill="url(#onsager-glow)" filter="url(#blur-filter)" />
-  <circle cx="367" cy="182" r="35" fill="url(#turing-glow)" filter="url(#blur-filter)" />
+  <!-- Glowing Backdrop Auras -->
+  <circle cx="500" cy="85" r="30" fill="url(#hodge-glow)" filter="url(#blur-filter)" />
+  <circle cx="633" cy="182" r="30" fill="url(#flux-glow)" filter="url(#blur-filter)" />
+  <circle cx="582" cy="338" r="30" fill="url(#morphic-glow)" filter="url(#blur-filter)" />
+  <circle cx="418" cy="338" r="30" fill="url(#onsager-glow)" filter="url(#blur-filter)" />
+  <circle cx="367" cy="182" r="30" fill="url(#turing-glow)" filter="url(#blur-filter)" />
+  <circle cx="200" cy="100" r="25" fill="url(#p2p-glow)" filter="url(#blur-filter)" />
+  <circle cx="800" cy="100" r="25" fill="url(#ws-glow)" filter="url(#blur-filter)" />
   
-  <circle cx="200" cy="100" r="30" fill="url(#p2p-glow)" filter="url(#blur-filter)" />
-  <circle cx="800" cy="100" r="30" fill="url(#ws-glow)" filter="url(#blur-filter)" />
+  <!-- Central Mind Glowing Aura -->
+  <circle cx="500" cy="225" r="75" fill="url(#mind-glow)" filter="url(#blur-filter)" />
 
   <!-- Core Active Crate Nodes -->
   <!-- Layer 0: Hodge -->
-  <circle cx="500" cy="85" r="14" fill="#1E293B" stroke="#3B82F6" stroke-width="3" />
-  <circle cx="500" cy="85" r="5" fill="#3B82F6" />
+  <circle cx="500" cy="85" r="12" fill="#0C0F1D" stroke="#3B82F6" stroke-width="2.5" />
+  <circle cx="500" cy="85" r="4" fill="#3B82F6" />
 
   <!-- Layer 1: Flux -->
-  <circle cx="633" cy="182" r="14" fill="#1E293B" stroke="#10B981" stroke-width="3" />
-  <circle cx="633" cy="182" r="5" fill="#10B981" />
+  <circle cx="633" cy="182" r="12" fill="#0C0F1D" stroke="#10B981" stroke-width="2.5" />
+  <circle cx="633" cy="182" r="4" fill="#10B981" />
 
   <!-- Layer 2: Morphic -->
-  <circle cx="582" cy="338" r="14" fill="#1E293B" stroke="#F59E0B" stroke-width="3" />
-  <circle cx="582" cy="338" r="5" fill="#F59E0B" />
+  <circle cx="582" cy="338" r="12" fill="#0C0F1D" stroke="#F59E0B" stroke-width="2.5" />
+  <circle cx="582" cy="338" r="4" fill="#F59E0B" />
 
   <!-- Layer 3: Onsager -->
-  <circle cx="418" cy="338" r="14" fill="#1E293B" stroke="#8B5CF6" stroke-width="3" />
-  <circle cx="418" cy="338" r="5" fill="#8B5CF6" />
+  <circle cx="418" cy="338" r="12" fill="#0C0F1D" stroke="#8B5CF6" stroke-width="2.5" />
+  <circle cx="418" cy="338" r="4" fill="#8B5CF6" />
 
   <!-- Layer 4: Turing -->
-  <circle cx="367" cy="182" r="14" fill="#1E293B" stroke="#EC4899" stroke-width="3" />
-  <circle cx="367" cy="182" r="5" fill="#EC4899" />
+  <circle cx="367" cy="182" r="12" fill="#0C0F1D" stroke="#EC4899" stroke-width="2.5" />
+  <circle cx="367" cy="182" r="4" fill="#EC4899" />
 
   <!-- Phase 11: P2P Crate Node -->
-  <circle cx="200" cy="100" r="12" fill="#1E293B" stroke="#14B8A6" stroke-width="3" />
-  <circle cx="200" cy="100" r="4" fill="#14B8A6" />
+  <circle cx="200" cy="100" r="10" fill="#0C0F1D" stroke="#14B8A6" stroke-width="2.5" />
+  <circle cx="200" cy="100" r="3" fill="#14B8A6" />
 
   <!-- Phase 12: WebSocket WebOS Node -->
-  <circle cx="800" cy="100" r="12" fill="#1E293B" stroke="#F43F5E" stroke-width="3" />
-  <circle cx="800" cy="100" r="4" fill="#F43F5E" />
+  <circle cx="800" cy="100" r="10" fill="#0C0F1D" stroke="#F43F5E" stroke-width="2.5" />
+  <circle cx="800" cy="100" r="3" fill="#F43F5E" />
+
+  <!-- SHIVYA MIND: CENTRAL COGNITIVE CORE -->
+  <!-- Rotating VSA codebook rings -->
+  <circle cx="500" cy="225" r="48" fill="none" stroke="#818CF8" stroke-width="1.2" stroke-dasharray="5 20" opacity="0.7">
+    <animateTransform attributeName="transform" type="rotate" from="0 500 225" to="360 500 225" dur="15s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="500" cy="225" r="36" fill="none" stroke="#F472B6" stroke-width="1.5" stroke-dasharray="8 8" opacity="0.8">
+    <animateTransform attributeName="transform" type="rotate" from="360 500 225" to="0 500 225" dur="10s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="500" cy="225" r="26" fill="none" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2 6" opacity="0.6">
+    <animateTransform attributeName="transform" type="rotate" from="0 500 225" to="360 500 225" dur="8s" repeatCount="indefinite" />
+  </circle>
+
+  <!-- Central Holographic Orb -->
+  <circle cx="500" cy="225" r="16" fill="#070A13" stroke="url(#mind-grad)" stroke-width="2.5" />
+  <circle cx="500" cy="225" r="7" fill="url(#mind-grad)">
+    <animate attributeName="r" values="6;8;6" dur="3s" repeatCount="indefinite" />
+  </circle>
 
   <!-- Text Annotations for Nodes -->
-  <text x="500" y="55" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 0: TOPOLOGY</text>
-  <text x="500" y="68" text-anchor="middle" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-hodge (DEC Matrix)</text>
+  <!-- Layer 0 -->
+  <text x="500" y="52" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 0: TOPOLOGY</text>
+  <text x="500" y="65" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">shivya-hodge (DEC Matrix)</text>
 
-  <text x="660" y="172" text-anchor="start" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 1: HOMEOSTASIS</text>
-  <text x="660" y="185" text-anchor="start" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-flux (Active Inference)</text>
+  <!-- Layer 1 -->
+  <text x="655" y="172" text-anchor="start" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 1: HOMEOSTASIS</text>
+  <text x="655" y="185" text-anchor="start" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">shivya-flux (Active Inference)</text>
 
-  <text x="610" y="342" text-anchor="start" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 2: SELF-MUTATION</text>
-  <text x="610" y="355" text-anchor="start" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-morphic (Morphic VM)</text>
+  <!-- Layer 2 -->
+  <text x="605" y="342" text-anchor="start" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 2: SELF-MUTATION</text>
+  <text x="605" y="355" text-anchor="start" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">shivya-morphic (Morphic VM)</text>
 
-  <text x="390" y="342" text-anchor="end" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 3: THERMODYNAMICS</text>
-  <text x="390" y="355" text-anchor="end" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-onsager (Onsager Coalition)</text>
+  <!-- Layer 3 -->
+  <text x="395" y="342" text-anchor="end" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 3: THERMODYNAMICS</text>
+  <text x="395" y="355" text-anchor="end" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">shivya-onsager (Onsager Coalition)</text>
 
-  <text x="340" y="172" text-anchor="end" font-family="'Outfit', sans-serif" font-size="12" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 4: MORPHOGENESIS</text>
-  <text x="340" y="185" text-anchor="end" font-family="'Inter', sans-serif" font-size="10" fill="#94A3B8">shivya-turing (Turing Substrate)</text>
+  <!-- Layer 4 -->
+  <text x="345" y="172" text-anchor="end" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#F8FAFC" letter-spacing="0.05em">LAYER 4: MORPHOGENESIS</text>
+  <text x="345" y="185" text-anchor="end" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">shivya-turing (Turing Substrate)</text>
 
-  <!-- Phase 11 P2P Annotation -->
-  <text x="180" y="80" text-anchor="end" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#14B8A6" letter-spacing="0.05em">P2P KADEMLIA TRANSPORT</text>
-  <text x="180" y="93" text-anchor="end" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">shivya-p2p (Big-Endian UDP)</text>
+  <!-- Shivya Mind Core Labels -->
+  <text x="500" y="152" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="12" font-weight="800" fill="url(#mind-grad)" letter-spacing="0.1em">SHIVYA MIND</text>
+  <text x="500" y="165" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#F8FAFC" opacity="0.8">Bit-Packed VSA Memory Engine</text>
 
-  <!-- Phase 12 WebSocket Annotation -->
-  <text x="820" y="80" text-anchor="start" font-family="'Outfit', sans-serif" font-size="11" font-weight="700" fill="#F43F5E" letter-spacing="0.05em">WEBOS VISUALIZER BRIDGE</text>
-  <text x="820" y="93" text-anchor="start" font-family="'Inter', sans-serif" font-size="9" fill="#94A3B8">ws://127.0.0.1:9002 (Non-Blocking)</text>
+  <text x="500" y="292" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#38BDF8">M ← M − λF</text>
+  <text x="500" y="304" text-anchor="middle" font-family="'Inter', sans-serif" font-size="8.5" fill="#64748B">Surprise-Driven Episodic Segmentation</text>
 
-  <!-- Hodge Decomposition Centerpiece -->
-  <rect x="390" y="200" width="220" height="50" rx="8" fill="rgba(15, 23, 42, 0.85)" stroke="#1E293B" stroke-width="1.5" />
-  <text x="500" y="222" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#38BDF8">ΔS = d*p + δ*q</text>
-  <text x="500" y="238" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#64748B">Hodge Decomposition (curl-projection reconciler)</text>
+  <!-- P2P transport -->
+  <text x="180" y="80" text-anchor="end" font-family="'Outfit', sans-serif" font-size="10" font-weight="700" fill="#14B8A6" letter-spacing="0.05em">P2P KADEMLIA</text>
+  <text x="180" y="93" text-anchor="end" font-family="'Inter', sans-serif" font-size="8.5" fill="#94A3B8">shivya-p2p (UDP)</text>
+
+  <!-- Visualizer bridge -->
+  <text x="820" y="80" text-anchor="start" font-family="'Outfit', sans-serif" font-size="10" font-weight="700" fill="#F43F5E" letter-spacing="0.05em">WEBOS BRIDGE</text>
+  <text x="820" y="93" text-anchor="start" font-family="'Inter', sans-serif" font-size="8.5" fill="#94A3B8">ws://127.0.0.1:9002</text>
 
   <!-- Ambient Philosophy Quote -->
-  <text x="500" y="420" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="13" font-style="italic" fill="#94A3B8">
-    "Truth is not a static global variable; it is a harmonic field flowing through a causal manifold."
+  <text x="500" y="445" text-anchor="middle" font-family="'Outfit', sans-serif" font-size="12" font-style="italic" fill="#94A3B8" letter-spacing="0.02em">
+    "Truth is a harmonic field flowing through a causal manifold, and memory is the holographic echo that reconstructs it."
   </text>
 </svg>

@@ -1,5 +1,9 @@
 use crate::blanket::MarkovBlanket;
 pub use shivya_hodge::SubstrateError;
+use shivya_mind::{
+    surprise::{Segmenter, SegmenterDecision},
+    Event,
+};
 
 /// Smallest stabilising ridge added to a singular covariance / precision
 /// matrix before retrying the inversion. Picked at 1e-6 because the math
@@ -18,6 +22,21 @@ pub trait MatrixMath<const N: usize> {
     /// Callers can use this to log telemetry health without changing the
     /// numerical behaviour, which still goes through ridge regularisation.
     fn try_inv(&self) -> Result<[[f64; N]; N], SubstrateError>;
+}
+
+/// Pack the agent's current environmental state into a stable, low
+/// cardinality VSA-friendly [`Event`]. The subject identifies the
+/// agent, the predicate is constant, and the object encodes the
+/// sign pattern of the observation -- enough for the segmenter's VSA
+/// memory to bind events to roles without inflating the codebook
+/// vocabulary every step.
+fn observation_event<const N: usize>(obs: &[f64; N]) -> Event {
+    let mut object = String::with_capacity(4 + N);
+    object.push_str("obs_");
+    for &x in obs {
+        object.push(if x >= 0.0 { 'p' } else { 'n' });
+    }
+    Event::new("agent", "perceived", object)
 }
 
 fn identity_1x1() -> [[f64; 1]; 1] { [[1.0]] }
@@ -246,6 +265,20 @@ where
     // Internal representation beliefs
     pub mu_q: [f64; I_DIM],
     pub sigma_q: [[f64; I_DIM]; I_DIM],
+
+    /// Episodic memory + boundary detector. Optional so existing
+    /// constructors stay byte-compatible; attach via
+    /// [`GibbsFluxAgent::with_segmenter`] to participate in the unified
+    /// cognitive-clockwork loop.
+    pub segmenter: Option<Segmenter>,
+}
+
+/// Per-step report from [`GibbsFluxAgent::step`].
+#[derive(Debug)]
+pub struct StepReport {
+    pub free_energy_history: Vec<f64>,
+    /// `Some(...)` iff a segmenter was attached to the agent.
+    pub decision: Option<SegmenterDecision>,
 }
 
 impl<const S_DIM: usize, const A_DIM: usize, const I_DIM: usize> GibbsFluxAgent<S_DIM, A_DIM, I_DIM>
@@ -280,9 +313,21 @@ where
             sigma_prior_inv,
             mu_q,
             sigma_q: [[0.0; I_DIM]; I_DIM],
+            segmenter: None,
         };
         agent.sigma_q = agent.compute_optimal_sigma_q(&agent.blanket.active);
         agent
+    }
+
+    /// Attach an episodic [`Segmenter`] (which owns its own VSA
+    /// [`shivya_mind::Memory`]) to the agent's lifecycle. Every
+    /// subsequent call to [`GibbsFluxAgent::step`] feeds that step's
+    /// raw free-energy reading and observation into the segmenter,
+    /// allowing variational-free-energy spikes to seal episode beads
+    /// without manual intervention.
+    pub fn with_segmenter(mut self, segmenter: Segmenter) -> Self {
+        self.segmenter = Some(segmenter);
+        self
     }
 
     pub fn compute_sigma_s(&self, active_state: &[f64; A_DIM]) -> [[f64; S_DIM]; S_DIM] {
@@ -376,6 +421,44 @@ where
 
         self.blanket.update_internal(&self.mu_q);
         f_history
+    }
+
+    /// One unified cognitive-clockwork step.
+    ///
+    /// Runs the variational belief update for `observation`, lifts the
+    /// pre-update (raw) free-energy reading -- the canonical
+    /// informational-surprise metric of the active-inference engine --
+    /// and forwards it together with the environmental observation
+    /// into the attached [`Segmenter`]. If no segmenter is attached the
+    /// step degenerates to a plain belief update.
+    ///
+    /// Hot-path note: only the existing `update_beliefs` allocations
+    /// occur per step; the segmenter call sits OUTSIDE the gradient
+    /// inner loop, so the math-heavy iteration remains
+    /// allocation-free.
+    pub fn step(
+        &mut self,
+        observation: &[f64; S_DIM],
+        lr: f64,
+        max_iters: usize,
+        tol: f64,
+    ) -> StepReport {
+        let free_energy_history = self.update_beliefs(observation, lr, max_iters, tol);
+        // f_history[0] is the free energy as measured BEFORE this step's
+        // gradient descent rolled mu_q toward the new observation, i.e.
+        // the agent's raw informational surprise at first contact.
+        let raw_surprise = free_energy_history
+            .first()
+            .copied()
+            .unwrap_or(0.0) as f32;
+        let decision = self.segmenter.as_mut().map(|seg| {
+            let event = observation_event(observation);
+            seg.observe_with_surprise(&event, raw_surprise)
+        });
+        StepReport {
+            free_energy_history,
+            decision,
+        }
     }
 
     pub fn evaluate_policies(&self, policies: &[[f64; A_DIM]]) -> Vec<f64> {

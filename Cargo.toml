@@ -19,7 +19,8 @@ members = [
     "crates/shivya-onsager",
     "crates/shivya-turing",
     "crates/shivya-cli",
-    "crates/shivya-p2p"
+    "crates/shivya-p2p",
+    "crates/shivya-mind"
 ]
 
 [dependencies]

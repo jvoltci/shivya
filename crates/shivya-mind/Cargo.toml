@@ -1,0 +1,16 @@
+[package]
+name = "shivya-mind"
+version = "0.4.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "Bit-packed VSA (MAP-B) memory engine with power-law decay and surprise-driven episodic segmentation."
+keywords = ["vsa", "hyperdimensional", "memory", "active-inference", "edge"]
+homepage = "https://github.com/jvoltci/shivya"
+repository = "https://github.com/jvoltci/shivya"
+
+[dependencies]
+bitvec = { version = "1.0", default-features = false, features = ["alloc"] }
+blake3 = "1.5"
+
+[dev-dependencies]
+shivya-flux = { version = "0.4.0", path = "../shivya-flux" }

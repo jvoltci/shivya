@@ -51,3 +51,7 @@ scratch/
 # Rust build artifacts
 target/
 
+# Historical reference implementations (e.g. the Python shivya-mind
+# prototype the Rust port descends from). Kept on disk as an oracle
+# for cross-language regression checks, but not part of the repo.
+research/

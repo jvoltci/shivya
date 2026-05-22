@@ -11,6 +11,7 @@ Shivya is a bare-metal, zero-dependency Rust runtime for **load and state balanc
 
 1. **A curl-projection reconciler** (Hodge **curl projector** over a discrete simplicial state complex — specifically the coexact / `d₁ᵀβ` component is solved for and subtracted; the gradient and harmonic components are not separately extracted) that lets concurrent edge writes settle to a single curl-free state after partitions heal, without a consensus round.
 2. **A multi-agent active-inference loop** that diffuses load through symmetric Onsager couplings, so nodes redistribute work toward minima of a collective variational free-energy functional.
+3. **A bit-packed VSA memory and cognitive model (Shivya Mind)** that lets individual nodes maintain a power-law decaying episodic history under a fixed 40 KB memory ceiling, segmenting experience boundaries dynamically based on information-theoretic surprise.
 
 The underlying mathematics is cited in [CITATIONS.md](CITATIONS.md). When this regime is appropriate is discussed in [docs/philosophy.md](docs/philosophy.md) (it is *not* a fit for workloads that require linearizable consistency).
 
@@ -45,6 +46,10 @@ graph TD
 ### Layer 4: Morphogenetic Pattern Substrate [`shivya-turing`](https://crates.io/crates/shivya-turing)
 - **What it is:** A graph-Laplacian Gierer-Meinhardt reaction-diffusion system over the node mesh, with RK4 integration and an explicit CFL stability bound (`dt ≤ 0.45 / (D_max · degree_max)`).
 - **What it does:** Picks up local "stress" hot-spots from the activator field. High-activation nodes can fire a *split* (pre-allocated object-pool mitosis with no runtime resize); low-utility, low-activation nodes are culled (apoptosis), gated on a minimum-cluster-size floor so the mesh can't collapse.
+
+### The Cognitive Core: VSA Episodic Memory [`shivya-mind`](crates/shivya-mind)
+- **What it is:** A bit-packed Vector Symbolic Architecture (VSA) memory engine operating in a 10,000-dimensional space `{−1, +1}^D` (MAP-B algebra), running under a fixed 40 KB memory floor.
+- **What it does:** Holographically binds role-value sensory experiences (XOR, rotation, and bundling operations) into a single hypervector tally on the wire (~1.25 KB). A predictor monitors the active-inference `F` (Variational Free Energy) surprise rate from `shivya-flux` to segment experiences into discrete episodes (beads). Memory decays naturally following power-law retention dynamics, and retractions use exact algebraic subtraction (`M ← M − λF`).
 
 ---
 
@@ -210,13 +215,14 @@ For an application-level integration that *doesn't* require knowing what a 1-cha
 
 The crates split cleanly into two tiers — *math* (zero-dependency, stack-allocated, WASM-native) and *runtime* (native binaries on top of Tokio):
 
-**Math + simulation tier — Layers 0-4. Zero external dependencies, stack-allocated where possible, build cleanly for `wasm32-unknown-unknown`. This is what powers the in-browser simulation cockpit (`docs/index.html`):**
+**Math + simulation tier — Layers 0-4 & Cognitive Memory. Zero external dependencies, stack-allocated where possible, build cleanly for `wasm32-unknown-unknown`. This is what powers the in-browser simulation cockpit (`docs/index.html`):**
 
 - [`crates/shivya-hodge`](https://crates.io/crates/shivya-hodge) — Layer 0: simplicial DEC operators + curl projector
 - [`crates/shivya-flux`](https://crates.io/crates/shivya-flux) — Layer 1: variational free-energy agent
 - [`crates/shivya-morphic`](https://crates.io/crates/shivya-morphic) — Layer 2: deterministic register-IR interpreter (500-cycle cap) + stochastic 1+1 mutation hill-climber over expression trees
 - [`crates/shivya-onsager`](https://crates.io/crates/shivya-onsager) — Layer 3: multi-agent thermodynamic ensemble
 - [`crates/shivya-turing`](https://crates.io/crates/shivya-turing) — Layer 4: reaction-diffusion topology adaptation
+- [`crates/shivya-mind`](crates/shivya-mind) — Cognitive Core: bit-packed Vector Symbolic Architecture (VSA) episodic memory engine + surprise-driven segmenter
 - [`crates/shivya-telemetry`](https://crates.io/crates/shivya-telemetry) — `wasm-bindgen` glue that re-exports the math tier into the browser orchestrator
 
 **Runtime tier — native targets only. These depend on Tokio for asynchronous I/O and the host kernel's socket API, so they are not WASM-portable and are not meant to be:**
